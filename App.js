@@ -10,6 +10,7 @@ import {
   setTimeout
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { debounce } from "lodash"
 
 import axios from "axios";
 
@@ -20,6 +21,7 @@ import Footer from "./components/Footer";
 import Menu from "./components/Menu/Menu";
 import { exportDefaultSpecifier } from "@babel/types";
 import Loading from "./components/Loading";
+import _ from 'lodash'
 
 export default class App extends React.Component {
   constructor(props) {
@@ -27,13 +29,13 @@ export default class App extends React.Component {
     this.state = {
       width: Math.round(Dimensions.get("window").width / 4.05),
       height: Dimensions.get("window").height,
-      loggedIn: false,
+      loggedIn: true,
       loading: false,
       message: "",
       note: "",
       completed: [],
       menu: false,
-      showTickets: true,
+      showTickets: false,
       display8: true,
       orders: order,
       merchantId: "QA6N92XP4MTQ1",
@@ -54,6 +56,8 @@ export default class App extends React.Component {
     this.clearAll = this.clearAll.bind(this);
     this.checkOrders = this.checkOrders.bind(this);
     this.limit = this.limit.bind(this);
+    this.getDate = this.getDate.bind(this)
+    this.saveBumpDelay = this.saveBumpDelay.bind(this)
   }
 
   refresh() {
@@ -99,12 +103,47 @@ export default class App extends React.Component {
           sortedOrders = this.state.orders.sort(a => a.createdTime);
           this.setState({ orders: sortedOrders });
         }
+      } else if (parsed["message"]["object_type"] == "D") {
+        ticketsPerHour = parsed['message']['tickets_per_hour']
+        sales = parsed['message']['sales']
+        averageWait = parsed['message']['average_wait']
+        console.log(ticketsPerHour, sales, averageWait)
       }
-    };
+    }
+
 
     websocket.onclose = () => {
       this.state.message = "closed";
     };
+  }
+
+  getDate() {
+    var month = new Date().getMonth() + 1
+    var day = new Date().getDate()
+    var year = new Date().getFullYear()
+    var date_str = year + '/' + month + '/' + day
+    var date = new Date(date_str).getTime() / 1000
+    var tomorrow = (60 * 60 * 24) + date
+    console.log(tomorrow)
+
+    var self = this;
+    axios
+      .get(`https://rocky-thicket-13861.herokuapp.com/api/getDashboard/`, {
+        params: {
+          merchant_id: `${this.state.merchantId}`,
+          code: `${this.state.code}`,
+          start_time: date,
+          end_time: tomorrow
+        }
+      })
+      .then(response => {
+        console.log(response.data)
+        var data = JSON.parse(response.data);
+        return (Object(data))
+      })
+      .catch(function (err) {
+        console.log("error: ", err);
+      });
   }
 
   onOpen(evt) {
@@ -112,11 +151,15 @@ export default class App extends React.Component {
   }
 
   limit() {
-    this.setState({ checkLimit: !this.state.checkLimit });
+    this.setState({ checkLimit: false });
   }
 
-  checkOrders(evt) {
+  checkOrders() {
+    console.log(this.state.checkLimit)
     if (this.state.checkLimit === false) {
+
+
+      this.setState({ checkLimit: true });
       console.log("checked");
       var pastHour = Math.round((Date.now() - 3600000) / 1000);
       var totalOrders = this.state.orders.concat(this.state.completed);
@@ -133,30 +176,44 @@ export default class App extends React.Component {
           datafrom: "check",
           hourOrders: hourIds
         })
-      );
+      )
     } else {
-      return;
+      return
     }
-    this.setState({ checkLimit: !this.state.checkLimit });
-    setTimeout(this.setState({ checkLimit: !this.state.checkLimit }), 1000);
+
   }
 
-  onMessage(evt) {}
+  onMessage(evt) { }
 
-  doneButton(id) {
-    var ind = this.state.orders.findIndex(order => order.id === id);
+  saveBumpDelay(tickets) {
 
-    var ticketDone = this.state.orders[ind];
+    var self = this;
+    axios
+      .get(`https://rocky-thicket-13861.herokuapp.com/api/saveBumpDelay/`, {
+        params: {
+          merchant_id: `${this.state.merchantId}`,
+          code: `${this.state.code}`,
+          completed: tickets
+        }
+      }).catch(function (err) {
+        console.log("error: ", err);
+      });
+  }
+
+  doneButton(item) {
+    var completedTime = parseInt(new Date().getTime() / 1000)
+    var ticketDone = item
+    var bumpDelay = (completedTime - ticketDone.createdTime / 1000)
+    ticketDone.bumpDelay = bumpDelay
+
+
 
     var newOrders = this.state.orders;
-    newOrders.splice(
-      newOrders.findIndex(item => item.id === id),
-      1
-    );
+
 
     this.setState(
       {
-        orders: newOrders
+        orders: newOrders.filter(order => order.id !== item.id)
       },
       () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -166,6 +223,11 @@ export default class App extends React.Component {
     this.setState({
       completed: [ticketDone, ...this.state.completed]
     });
+
+    console.log(Object(this.state.completed))
+    if (this.state.completed.length % 50 === 0) {
+      this.saveBumpDelay(this.state.completed.slice(0, 50))
+    }
   }
 
   undo() {
@@ -223,7 +285,7 @@ export default class App extends React.Component {
         self.setState({ employees: employees });
         console.log("employees: " + JSON.stringify(employees));
       })
-      .catch(function(err) {
+      .catch(function (err) {
         console.log("error: ", err);
       });
   }
@@ -251,7 +313,7 @@ export default class App extends React.Component {
         console.log("typeColors: " + JSON.stringify(typeColors));
         self.setState({ loggedIn: !this.state.loggedIn });
       })
-      .catch(function(err) {
+      .catch(function (err) {
         console.log("error: ", err);
       });
   }
@@ -294,6 +356,10 @@ export default class App extends React.Component {
             typeColors={this.state.typeColors}
             employees={this.state.employees}
             orderTypes={this.state.orderTypes}
+            getDate={this.getDate}
+            merchantId={this.state.merchantId}
+            code={this.state.code}
+            data={this.getDate()}
           />
         )}
         {this.state.loading ? <Loading></Loading> : <View />}
@@ -302,8 +368,8 @@ export default class App extends React.Component {
             <Login loggedInToggle={this.loggedInToggle} />
           </View>
         ) : (
-          <View />
-        )}
+            <View />
+          )}
         {this.state.showTickets ? (
           <LinearGradient
             start={[1, 1]}
@@ -324,8 +390,8 @@ export default class App extends React.Component {
             <Footer undo={this.undo} clearAll={this.clearAll} />
           </LinearGradient>
         ) : (
-          <View />
-        )}
+            <View />
+          )}
       </View>
     );
   }

@@ -62,7 +62,7 @@ class AnimatedTicket extends React.PureComponent {
       duration: 500,
       useNativeDriver: true
     }).start(() => {
-      this.props.done(this.props.item.id);
+      this.props.done(this.props.item);
     });
   }
 
@@ -201,7 +201,7 @@ class AnimatedTicket extends React.PureComponent {
                     style={{
                       color: `${
                         this.props.typeColors[this.props.item.orderType][1]
-                      }`,
+                        }`,
                       fontWeight: "bold"
                     }}
                   >

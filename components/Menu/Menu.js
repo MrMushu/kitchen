@@ -15,6 +15,7 @@ import Settings from "./Settings/Settings";
 import MyAccount from "./MyAccount/MyAccount";
 import Orders from "./Orders/Orders";
 import Dashboard from "./Dashboard/Dashboard";
+import axios from "axios";
 
 class Menu extends React.Component {
   constructor(props) {
@@ -24,13 +25,77 @@ class Menu extends React.Component {
       selectedPage: 0,
       selectedCategory: 0,
       selectedItem: orders[0],
-      pages: parseInt(orders.length / 9) + 1
+      pages: parseInt(orders.length / 9) + 1,
+      merchantId: this.props.merchantId,
+      code: this.props.code,
+      data: {
+        sales: {
+          previous: 0,
+          total: 0
+        },
+        orders: {
+          previous: 0
+          , total: 0
+        },
+        bump: {
+          previous: 0,
+          total: 0
+        },
+        category_sales: {
+          categories: [],
+          series: []
+        }
+      },
+      sales: 2423.24,
+      averageWait: '5m 3s'
     };
     this.menuToggle = this.props.menuToggle.bind(this);
     this.selectItem = this.selectItem.bind(this);
     this.selectPage = this.selectPage.bind(this);
     this.pageSelect = this.pageSelect.bind(this);
+    this.getDate = this.getDate.bind(this)
     this.setSelected();
+    this.getDate()
+
+
+
+  }
+
+  getDate(days = 1) {
+    var month = new Date().getMonth() + 1
+    var day = new Date().getDate()
+    var year = new Date().getFullYear()
+    var date_str = year + '/' + month + '/' + day
+    var date = new Date(date_str).getTime() / 1000
+    var tomorrow = (60 * 60 * 24 * days) + date
+
+    var self = this;
+
+    axios
+      .get(`https://rocky-thicket-13861.herokuapp.com/api/getDashboard/`, {
+        params: {
+          merchant_id: `${this.state.merchantId}`,
+          code: `${this.state.code}`,
+          start_time: date,
+          end_time: tomorrow
+        }
+      })
+      .then(response => {
+
+        var data = (JSON.parse(response.data));
+        self.setState({
+          data: data
+        })
+        console.log(data)
+
+      })
+      .catch(function (err) {
+        console.log("error: ", err);
+      });
+
+
+
+
   }
 
   setSelected = async () => {
@@ -62,7 +127,7 @@ class Menu extends React.Component {
         console.log("nothing");
       } else {
         this.setState({ settings: JSON.parse(selectedSettings) });
-        console.log(this.state.settings);
+
       }
     } catch (error) {
       console.log(error);
@@ -88,7 +153,10 @@ class Menu extends React.Component {
 
   pageSelect() {
     if (this.state.selectedCategory === 0) {
+
+
       return (
+
         <Dashboard
           done={id => this.props.doneButton(id)}
           width={this.props.width}
@@ -100,8 +168,14 @@ class Menu extends React.Component {
           pages={this.state.pages}
           selectPage={this.selectPage}
           selectedPage={this.state.selectedPage}
+          sales={this.state.sales}
+          averageWait={this.state.averageWait}
+          data={this.state.data}
         />
       );
+
+
+
     } else if (this.state.selectedCategory === 1) {
       return (
         <Orders
@@ -122,6 +196,7 @@ class Menu extends React.Component {
     }
   }
 
+
   render() {
     return (
       <LinearGradient
@@ -135,7 +210,8 @@ class Menu extends React.Component {
           style={{
             height: "22%",
             width: "100%",
-            backgroundColor: "#8097b0",
+            //backgroundColor: "#8097b0",
+            backgroundColor: "#edf4ff",
             position: "absolute"
           }}
         ></View>
@@ -194,42 +270,45 @@ class Menu extends React.Component {
                     ))}
                   </View>
                 ) : (
-                  <View
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      alignContent: "center"
-                    }}
-                  >
                     <View
                       style={{
-                        alignContent: "center",
-                        alignItems: "center",
-                        height: "100%",
                         width: "100%",
+                        height: "100%",
+                        alignItems: "center",
                         justifyContent: "center",
-                        alignSelf: "center"
+                        alignContent: "center"
                       }}
                     >
-                      <CategoryIcon source={tab.iconGrey}></CategoryIcon>
-                      <View style={{ paddingTop: "5%" }}>
-                        <Text style={{ color: "#B6BAC9" }}>{tab.label}</Text>
+                      <View
+                        style={{
+                          alignContent: "center",
+                          alignItems: "center",
+                          height: "100%",
+                          width: "100%",
+                          justifyContent: "center",
+                          alignSelf: "center"
+                        }}
+                      >
+                        <CategoryIcon source={tab.iconGrey}></CategoryIcon>
+                        <View style={{ paddingTop: "5%" }}>
+                          <Text style={{ color: "#B6BAC9" }}>{tab.label}</Text>
+                        </View>
                       </View>
+                      {tab.lines.map((setting, i) => (
+                        <SettingsLine key={i}>
+                          <SettingsText>{setting}#B6BAC9</SettingsText>
+                        </SettingsLine>
+                      ))}
                     </View>
-                    {tab.lines.map((setting, i) => (
-                      <SettingsLine key={i}>
-                        <SettingsText>{setting}#B6BAC9</SettingsText>
-                      </SettingsLine>
-                    ))}
-                  </View>
-                )}
+                  )}
               </TouchableOpacity>
             ))}
           </Sidebar>
 
-          <View width="91.5%">{this.pageSelect()}</View>
+          <View width="91.5%">
+
+            {this.pageSelect()}
+          </View>
         </ContainerRow>
       </LinearGradient>
     );
