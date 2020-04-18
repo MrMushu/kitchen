@@ -11,41 +11,51 @@ import {
   FlatList,
   Platform,
   UIManager,
-  LayoutAnimation
+  LayoutAnimation,
+  Dimensions
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
 import { Transition, animated } from "react-spring/renderprops";
 import AnimatedTicket from "./AnimatedTicket";
 
+import { connect } from 'react-redux'
+
+const areEqual = (prevProps, nextProps) => {
+  return (prevProps.item.updated === nextProps.item.updated)
+};
+
+const DisplayTickets = React.memo(AnimatedTicket, areEqual);
+
+
 class Tickets extends React.PureComponent {
   constructor(props) {
     super(props);
-    this.ticket4 = [];
     this.state = {
       ticketPos: [],
-      width: this.props.width,
-      selectedTicket: ""
+      width: Math.round(Dimensions.get("window").width / 5.01),
+
     };
     this.scrollEnd = this.scrollEnd.bind(this);
-    this.selectTicket = this.selectTicket.bind(this);
+    this.done = this.done.bind(this)
+
   }
-  selectTicket(id) {
-    if (this.state.selectedTicket == id) {
-      this.props.doneButton(id);
-    } else {
-      this.setState({ selectedTicket: id });
-    }
-  }
+
+
 
   scrollEnd() {
     this.scrollView.scrollToEnd();
   }
 
+  done = (item) => (this.props.doneButton(item), console.log("props: ", this.props.tickets))
+
+
+
+
   render() {
-    console.log("tickets render");
+    console.log("TICKETS rerender")
     return (
-      <View style={box}>
+      <View style={box} >
         <ScrollView
           ref={scrollView => (this.scrollView = scrollView)}
           onContentSizeChange={this.scrollEnd}
@@ -56,35 +66,36 @@ class Tickets extends React.PureComponent {
             borderBottomWidth: 0.25
           }}
         >
-          {this.props.orders.slice(0, 8).map((item, i) => {
-            return (
-              <AnimatedTicket
-                key={item.id}
-                orderId={item.id}
-                width={this.props.width}
-                height="50%"
-                orders={this.state.orders}
-                selectTicket={id => this.selectTicket(id)}
-                done={id => this.props.doneButton(id)}
-                item={item}
-                typeColors={this.props.typeColors}
-                employees={this.props.employees}
-                orderTypes={this.props.orderTypes}
-                style={{ borderBottomWidth: 0.25 }}
-                buttonIcon={require("../icons/done.png")}
-                buttonLabel="DONE"
-              />
-            );
-          })}
+          {this.props.tickets.pending.map((item, i) => (
+            <DisplayTickets
+              key={item.id}
+              orderId={item.id}
+              height="49.5%"
+              item={item}
+              style={{ borderBottomWidth: 0.25 }}
+              buttonIcon={require("../icons/done.png")}
+              buttonLabel="DONE"
+              enabled='true' />
+          ))}
+
+
         </ScrollView>
       </View>
     );
   }
 }
 
-export default Tickets;
+function mapStateToProps(state) {
+  return {
+    tickets: state.tickets
+  }
+}
 
-const box = { height: "90%" };
+
+
+export default connect(mapStateToProps)(Tickets)
+
+const box = { height: "95.5%" };
 
 const Colors = [
   ["#4c85ba", "#346199"],

@@ -5,45 +5,57 @@ import {
   Image,
   View,
   Text,
-  WebView,
-  AsyncStorage
+  Button,
+  AsyncStorage,
+  TouchableOpacity,
+  Dimensions
 } from "react-native";
+import {
+  WebView
+} from 'react-native-webview'
 import QueryString from "qs";
 import { URL } from "url";
+import { connect } from 'react-redux'
+import { LOGIN } from '../actions/login'
+import { AuthSession, ScreenOrientation } from 'expo'
+
+import { LinearGradient } from "expo-linear-gradient";
+
+const client_id = 'BHQ5NARB3RR3C'
+const width = Dimensions.get("window").width
 
 class Login extends React.PureComponent {
   constructor(props) {
     super(props);
+    this.state = { result: null, success: null }
   }
 
-  onNavigationStateChange = navState => {
-    urlCheck =
-      "https://sandbox.dev.clover.com/oauth/authorize?client_id=BHQ5NARB3RR3C";
-    if (urlCheck !== navState.url) {
-      url = navState.url;
-      urlCheck = url;
-      const parsedUrl = QueryString.parse(url.split("?")[1]);
+  handlePressAsync = async () => {
+    let redirectUrl = AuthSession.getRedirectUrl()
 
-      if (
-        url.includes("rocky") &&
-        parsedUrl["code"] &&
-        parsedUrl["merchant_id"] &&
-        parsedUrl["employee_id"]
-      ) {
-        const parsedUrl = QueryString.parse(url.split("?")[1]);
-
-        merchantId = parsedUrl["merchant_id"];
-        code = parsedUrl["code"];
-
-        // get token from
-
-        this.storeItem("merchantId", merchantId);
-        this.storeItem("code", code);
-
-        this.props.loggedInToggle();
+    let result = await AuthSession.startAsync(
+      {
+        authUrl:
+          `https://sandbox.dev.clover.com/oauth/authorize?client_id=BHQ5NARB3RR3C&state=${redirectUrl}`,
       }
+    );
+    this.setState({ result });
+
+    if (result.type === 'success') {
+      // Just simple way to store the token in this examples
+      this.props.login(result.params)
+      this.state.success = true
+
+
+      // sleep for 3 seconds
+
+      this.props.loggedInToggle()
+
+
+    } else {
+      return
     }
-  };
+  }
 
   async storeItem(key, value) {
     try {
@@ -53,95 +65,93 @@ class Login extends React.PureComponent {
     }
   }
 
+
   render() {
     return (
-      <Container style={{ borderTopLeftRadius: 12 }}>
-        <Cover>
-          <WebView
-            source={{
-              uri:
-                "https://sandbox.dev.clover.com/oauth/authorize?client_id=BHQ5NARB3RR3C"
-            }}
-            onNavigationStateChange={this.onNavigationStateChange}
-            style={{ padding: 60 }}
-            scrollEnabled={true}
-          ></WebView>
-        </Cover>
-        <LoginContainer>
-          <View></View>
-          <TextContainer placeholder="email" />
-          <TextContainer placeholder="password" />
-        </LoginContainer>
-      </Container>
+      <Container style={{ borderTopLeftRadius: 12, backgroundColor: '#edf7ff' }}>
+        <Image source={require('../pngs/splash.png')} resizeMode={'contain'} style={{ width: '100%', alignSelf: 'center', position: 'absolute' }} />
+        <View style={{ width: '60%', alignSelf: 'center' }}>
+
+          <Image source={require('../pngs/aspect.png')} resizeMode={'contain'} style={{ width: '60%', alignSelf: 'center' }} />
+
+
+          <View style={{ justifyContent: 'center', alignSelf: 'center', }}>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}></Text>
+          </View>
+        </View>
+
+        <View style={{ height: '100%', width: '40%', padding: '3%', elevation: 2 }}>
+
+          <View style={{ height: '45%', justifyContent: 'flex-end', }}>
+
+            <View style={{}}>
+              <Image
+                resizeMode={'contain'}
+                style={{ alignSelf: "center", width: width / 5, height: width / 16 }}
+                source={require("../icons/clover.png")}
+              />
+            </View>
+            <Text style={{ textAlign: 'center', fontWeight: '800', fontSize: 24 }}>
+              Login with Clover to start
+            </Text>
+          </View>
+          <View style={{ height: '15%' }} />
+          <View style={{
+            justifyContent: 'center',
+            alignContent: 'center',
+            alignSelf: 'center',
+            height: '20%',
+            width: '90%',
+          }}>
+
+            <TouchableOpacity onPress={this.handlePressAsync}>
+              <View style={{ backgroundColor: '#346199', padding: 22, justifyContent: 'center', borderRadius: 4, elevation: 4 }}>
+                <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>Authorize</Text>
+              </View>
+            </TouchableOpacity>
+            <View style={{ padding: 12, justifyContent: 'flex-end' }}>
+              <Text style={{ textAlign: 'center' }}>
+                Sign-up today ->
+              </Text>
+            </View>
+
+
+          </View>
+        </View>
+
+
+        {this.state.result ? <Text>Success!</Text> : null}
+      </Container >
     );
   }
 }
 
-export default Login;
+function mapStateToProps(state) {
+  return {
+    account: state.account
+  }
+}
+
+
+function mapDispatchToProps(dispatch) {
+  return ({
+    login: (params) => dispatch({ type: LOGIN, data: params }),
+  })
+}
+
+
+export default connect(mapStateToProps, mapDispatchToProps)(Login);
 
 const Container = styled.View`
-  position: absolute;
   background: white;
   width: 100%;
   height: 100%;
-  align-self: flex-end;
-  flex-direction: row;
+  flex-direction: row
+  
 `;
 
-const Cover = styled.View`
-  height: 100%;
-  width: 100%;
-  background: #5f8ac7;
-  border-bottom-width: 1;
-`;
-
-const LoginContainer = styled.View`
-  padding-top: 25%;
-  background: #edf4ff;
-  width: 33%;
-  height: 100%;
-  align-items: center;
-`;
-
-const TextContainer = styled.TextInput`
-  width: 80%;
-  border: 1px;
-  padding: 12px;
-  padding-left: 24px;
-`;
-
-const IconContainer = styled.View`
-  width: 25%;
-  align-items: flex-end;
-  padding: 12px;
-`;
-
-const Icon = styled.Image`
-  height: 50px;
-  width: 50px;
-`;
-
-const LabelContainer = styled.View`
-  width: 75%;
-  padding: 12px;
-`;
-const Label = styled.Text`
-  font-size: 18;
-`;
-
-const tabs = [
-  {
-    icon: require("../icons/user.png"),
-    label: "Account"
-  },
-  {
-    icon: require("../icons/display.png"),
-    label: "Display"
-  },
-  {
-    label: "Completed Orders"
-  },
-  {
-    label: "Help"
-  }
-];
+const Authorize = styled.Button`
+  padding: 12 12 12 12
+  width: 100%
+  height: 50px
+`

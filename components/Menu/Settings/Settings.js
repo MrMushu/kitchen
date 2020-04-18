@@ -14,61 +14,83 @@ import { LinearGradient } from "expo-linear-gradient";
 import SwitchToggle from "react-native-switch-toggle";
 import Header from "../../Header";
 
+import { connect } from 'react-redux'
+import { SAVE_SETTINGS, RESET_SETTINGS } from '../../../actions/settings'
+
 class Settings extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { settings: this.props.settings };
+    this.state = {
+      settings: Object.create(this.props.account.settings),
+      selected: {}
+    };
 
     this.selectItem = this.selectItem.bind(this);
     this.selectTypeColor = this.selectTypeColor.bind(this);
-    selected = this.state.settings;
+    this.apply = this.apply.bind(this)
   }
 
   selectItem(item, id) {
+
     var newSettings = Object.assign(this.state.settings, { [item]: id });
     this.setState({ settings: newSettings });
   }
 
   selectTypeColor(item, id) {
-    var newTypes = Object.assign(this.state.settings.typeColors, {
-      [item]: id
-    });
-    var newSettings = Object.assign(this.state.settings, newTypes);
+
+    var newSettings = Object.create(this.state.settings)
+
+    Object.assign(newSettings.typeColors, { [item]: id });
     this.setState({ settings: newSettings });
   }
 
-  async save() {
-    try {
-      await AsyncStorage.setItem(
-        "settings",
-        JSON.stringify(this.state.settings)
-      ).then(console.log("finished!"));
-    } catch (error) {
-      console.log(error);
-    }
-  }
 
   resetDefault() {
     return null;
   }
 
+  apply() {
+    this.props.save(this.state.settings)
+  }
+
+  componentDidMount() {
+    this.setState({ selected: this.state.settings })
+  }
+
   render() {
+    selected = this.state.settings;
     return (
       <SettingsContainer>
+
+
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={{ padding: "2%" }}
         >
-          <View style={{ height: "4%", justifyContent: "center" }}>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                paddingHorizontal: "2%"
-              }}
-            >
-              <Text style={{ fontSize: 22, color: "white" }}>Settings</Text>
+          <View style={{ flexDirection: 'row', paddingTop: '2%', paddingVertical: '2%', paddingLeft: '2%', justifyContent: "space-between", alignItems: 'flex-end' }}>
+            <View style={{ width: '80%' }}>
+              <Text style={{ fontSize: 22 }}>Settings</Text>
+              <Text style={{ paddingTop: '0%', color: 'darkgrey', fontWeight: 'bold' }} >Change Settings</Text>
             </View>
+            <View style={{ width: '10%', alignSelf: 'flex-end' }}>
+              <TouchableOpacity onPress={this.apply}>
+                <LinearGradient
+                  colors={["#ff884d", "#ff7152"]}
+                  start={[1, 1]}
+                  style={{
+                    padding: '10%',
+                    borderRadius: 4,
+
+                  }}>
+
+                  <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>APPLY</Text>
+
+                </LinearGradient>
+              </TouchableOpacity>
+
+
+            </View>
+
           </View>
 
           <SettingsCard>
@@ -134,41 +156,41 @@ class Settings extends React.Component {
                       </View>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity
-                      onPress={() => this.selectItem("ticketDisplay", i)}
-                    >
-                      <SettingsCard
-                        style={{
-                          backgroundColor: "#f7f7f7"
-                        }}
+                      <TouchableOpacity
+                        onPress={() => this.selectItem("ticketDisplay", i)}
                       >
-                        <TextCenter>{option.name}</TextCenter>
-                        <PaddedContainer>
-                          <Image
-                            style={{
-                              alignSelf: "center",
-                              height: 185,
-                              width: 250
-                            }}
-                            source={require("../../../pngs/DisplayView.png")}
-                          />
-                        </PaddedContainer>
-                        <SubtextCenter>{option.description}</SubtextCenter>
-                      </SettingsCard>
-                      <View style={{ paddingTop: 12 }}>
-                        <View
+                        <SettingsCard
                           style={{
-                            backgroundColor: "#f7f7f7",
-                            width: 20,
-                            height: 20,
-                            alignSelf: "center",
-                            justifyContent: "space-around",
-                            borderRadius: 32
+                            backgroundColor: "#f7f7f7"
                           }}
-                        />
-                      </View>
-                    </TouchableOpacity>
-                  )}
+                        >
+                          <TextCenter>{option.name}</TextCenter>
+                          <PaddedContainer>
+                            <Image
+                              style={{
+                                alignSelf: "center",
+                                height: 185,
+                                width: 250
+                              }}
+                              source={require("../../../pngs/DisplayView.png")}
+                            />
+                          </PaddedContainer>
+                          <SubtextCenter>{option.description}</SubtextCenter>
+                        </SettingsCard>
+                        <View style={{ paddingTop: 12 }}>
+                          <View
+                            style={{
+                              backgroundColor: "#f7f7f7",
+                              width: 20,
+                              height: 20,
+                              alignSelf: "center",
+                              justifyContent: "space-around",
+                              borderRadius: 32
+                            }}
+                          />
+                        </View>
+                      </TouchableOpacity>
+                    )}
                 </View>
               ))}
             </ContainerRow>
@@ -176,13 +198,13 @@ class Settings extends React.Component {
           <View style={{ paddingVertical: "2%" }}>
             <SettingsCard>
               <SectionContainer>
-                <SectionText>Color Scheme</SectionText>
-                <SectionSubText>Adjusts color scheme of the app</SectionSubText>
+                <SectionText>Tickets per Row</SectionText>
+                <SectionSubText>Adjusts amount of tickets on screen</SectionSubText>
               </SectionContainer>
               <ContainerRow>
                 {Object.keys(colorScheme).map((scheme, i) => (
                   <SchemeCard key={i}>
-                    {selected.colorScheme === i ? (
+                    {selected.ticketsPerRow === colorScheme[scheme] ? (
                       <TouchableOpacity style={{ flexDirection: "row" }}>
                         <View
                           style={{ paddingRight: 24, justifyContent: "center" }}
@@ -219,32 +241,32 @@ class Settings extends React.Component {
                         </SettingsCard>
                       </TouchableOpacity>
                     ) : (
-                      <TouchableOpacity
-                        onPress={() => this.selectItem("colorScheme", i)}
-                        style={{ flexDirection: "row" }}
-                      >
-                        <View
-                          style={{ paddingRight: 24, justifyContent: "center" }}
+                        <TouchableOpacity
+                          onPress={() => this.selectItem("ticketsPerRow", colorScheme[scheme])}
+                          style={{ flexDirection: "row" }}
                         >
                           <View
-                            style={{
-                              backgroundColor: "#f7f7f7",
-                              width: 20,
-                              height: 20,
-                              alignSelf: "center",
-                              justifyContent: "space-around",
-                              borderRadius: 32
-                            }}
-                          />
-                        </View>
-                        <SettingsCard
-                          style={{ backgroundColor: "#f7f7f7" }}
-                          width="80%"
-                        >
-                          <Text>{scheme}</Text>
-                        </SettingsCard>
-                      </TouchableOpacity>
-                    )}
+                            style={{ paddingRight: 24, justifyContent: "center" }}
+                          >
+                            <View
+                              style={{
+                                backgroundColor: "#f7f7f7",
+                                width: 20,
+                                height: 20,
+                                alignSelf: "center",
+                                justifyContent: "space-around",
+                                borderRadius: 32
+                              }}
+                            />
+                          </View>
+                          <SettingsCard
+                            style={{ backgroundColor: "#f7f7f7" }}
+                            width="80%"
+                          >
+                            <Text>{scheme}</Text>
+                          </SettingsCard>
+                        </TouchableOpacity>
+                      )}
                   </SchemeCard>
                 ))}
               </ContainerRow>
@@ -293,7 +315,7 @@ class Settings extends React.Component {
               </View>
             </View>
             <View style={{ paddingTop: 12 }}>
-              {Object.keys(typeColors).map((type, i) => (
+              {Object.keys(selected.typeColors).map((type, i) => (
                 <View
                   key={i}
                   style={{
@@ -343,22 +365,22 @@ class Settings extends React.Component {
                             />
                           </TouchableOpacity>
                         ) : (
-                          <TouchableOpacity
-                            onPress={() => this.selectTypeColor(type, i)}
-                          >
-                            <View
-                              style={{
-                                height: 20,
-                                width: 20,
-                                borderRadius: 75,
-                                borderWidth: 0.35,
-                                borderColor: "grey",
-                                backgroundColor: "white",
-                                padding: 12
-                              }}
-                            />
-                          </TouchableOpacity>
-                        )}
+                            <TouchableOpacity
+                              onPress={() => this.selectTypeColor(type, i)}
+                            >
+                              <View
+                                style={{
+                                  height: 20,
+                                  width: 20,
+                                  borderRadius: 75,
+                                  borderWidth: 0.35,
+                                  borderColor: "grey",
+                                  backgroundColor: "white",
+                                  padding: 12
+                                }}
+                              />
+                            </TouchableOpacity>
+                          )}
                       </View>
                     ))}
                   </View>
@@ -369,7 +391,7 @@ class Settings extends React.Component {
                     }}
                   >
                     <LinearGradient
-                      colors={colors[this.state.settings.typeColors[type]]}
+                      colors={colors[selected.typeColors[type]]}
                       start={[1, 1]}
                       style={{
                         padding: 12,
@@ -391,8 +413,8 @@ class Settings extends React.Component {
                       <Text
                         style={{
                           color: `${
-                            colors[this.state.settings.typeColors[type]][1]
-                          }`,
+                            colors[selected.typeColors[type]][1]
+                            }`,
                           fontWeight: "bold"
                         }}
                       >
@@ -427,7 +449,7 @@ class Settings extends React.Component {
               </View>
             ))}
           </ContainerRow>
-          <TouchableOpacity onPress={() => this.save()}>
+          <TouchableOpacity onPress={this.apply}>
             <View
               style={{
                 backgroundColor: "#30baa3",
@@ -459,8 +481,21 @@ class Settings extends React.Component {
     );
   }
 }
+function mapStateToProps(state) {
+  return {
+    account: state.account
+  }
+}
 
-export default Settings;
+
+function mapDispatchToProps(dispatch) {
+  return ({
+    save: (newSettings) => dispatch({ type: SAVE_SETTINGS, data: newSettings }),
+  })
+}
+export default connect(mapStateToProps, mapDispatchToProps)(Settings);
+
+
 
 const Heading = styled.View`
   align-items: center;
@@ -571,18 +606,14 @@ var ticketDisplay = [
 ];
 
 const colorScheme = {
-  Default: [],
-  Warm: [],
-  Dark: [],
-  Cool: []
+  '7 Tickets': 7,
+  '6 Tickets': 6,
+  '5 Tickets': 5,
 };
 
-const typeColors = {
-  "To-Go": ["#4c85ba", "#346199"],
-  "Dine-In": ["#ff884d", "#ff7152"],
-  Delivery: ["#2cb5d4", "#0890c2"],
-  "Take-Out": ["#ffac38", "#ff880f"]
-};
+
+
+
 
 const colors = [
   ["#4c85ba", "#346199"],

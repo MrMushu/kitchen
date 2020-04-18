@@ -10,23 +10,23 @@ import {
   Button,
   Dimensions
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import SwitchToggle from "react-native-switch-toggle";
-import Header from "../../Header";
-import AnimatedTicket from "../../AnimatedTicket";
+
+
+
 import {
   LineChart,
   BarChart,
 } from 'react-native-chart-kit';
 import PieChart from 'react-native-pie-chart';
-
+import { connect } from 'react-redux'
+import { GET_DASHBOARD } from '../../../actions/dashboard'
 
 class Dashboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      fadeValue: new Animated.Value(0),
       type: "column2d",
-      width: "100%",
       height: "100%",
       todayButton: '#346199',
       lastButton: '#edf4ff',
@@ -35,17 +35,32 @@ class Dashboard extends React.Component {
       orange: ["#ffac38", "#ff880f"],
       lightBlue: ["#2cb5d4", "#0890c2"],
       lightGrey: ['#b8b8b8', '#b8b8b8'],
-      data: {
-        'sales': 2634.53,
-        'orders_per_hour': 2,
-        'total_orders': 42
-      }
+
     }
+
     this.todayToggle = this.todayToggle.bind(this)
     this.lastToggle = this.lastToggle.bind(this)
     this.positiveGreenText = this.positiveGreenText.bind(this)
     this.getBumpRate = this.getBumpRate.bind(this)
-    console.log('data' + Object.keys(this.props.data))
+    this.bounceUpAnimation = this.bounceUpAnimation.bind(this)
+    this.getBumpDelay = this.getBumpDelay.bind(this)
+    this.getBumpDelay()
+    this.bounceUpAnimation()
+  }
+
+  getBumpDelay() {
+    var month = new Date().getMonth() + 1
+    var day = new Date().getDate()
+    var year = new Date().getFullYear()
+    var date_str = year + '/' + month + '/' + day
+    var date = new Date(date_str).getTime() / 1000
+    const finished = this.props.tickets.completed.filter(ticket => ticket.createdTime >= date)
+    var bumpDelays = []
+    for (var key in finished) {
+      var obj = finished[key]
+      bumpDelays.push(obj.bumpDelay)
+    }
+    console.log(bumpDelays)
   }
 
   todayToggle() {
@@ -62,8 +77,8 @@ class Dashboard extends React.Component {
   }
 
   getBumpRate() {
-    var m = parseInt(this.props.data.bump.total / 60)
-    var s = this.props.data.bump.total - (m * 60)
+    var m = parseInt(this.props.dashboard.data.bump.total / 60)
+    var s = this.props.dashboard.data.bump.total - (m * 60)
     console.log(m, s)
     return (m + 'm ' + s + 's')
   }
@@ -76,18 +91,31 @@ class Dashboard extends React.Component {
     }
   }
 
+  bounceUpAnimation() {
+    Animated.timing(this.state.fadeValue, {
+      toValue: 1,
+      duration: 1200
+    }).start()
+  }
+
+
+
   render() {
     return (
       <SettingsContainer>
-        <View style={{ flexDirection: 'row', paddingHorizontal: "3%", paddingTop: '2%', height: "10%", width: '100%', justifyContent: "space-between", alignItems: 'flex-end' }}>
-          <View style={{ width: '80%' }}>
-            <Text style={{ fontSize: 22 }}>Menu / Dashboard</Text>
+        <View style={{ flexDirection: 'row', paddingLeft: "4%", paddingRight: '2%', paddingTop: '2%', width: '100%', justifyContent: "space-between", alignItems: 'flex-end' }}>
+          <View style={{ width: '50%' }}>
+
+
+            <Text style={{ fontSize: 22 }}>Dashboard</Text>
             <WidgetHeader style={{ paddingTop: '0%' }} color='darkgrey'>Welcome to your dashboard!</WidgetHeader>
+
+
           </View>
 
-          <View style={{ flexDirection: 'row', alignSelf: 'flex-end', width: '50%' }}>
+          <View style={{ flexDirection: 'row', alignSelf: 'flex-end', width: '50%', justifyContent: 'flex-end', }}>
             <DateRangeButton color={this.state.lastButton} border={this.state.todayButton} onPress={this.lastToggle} style={{ fontWeight: 'bold' }}>
-              <Text style={{ color: this.state.todayButton, fontWeight: 'bold' }}>THIS WEEK</Text>
+              <Text style={{ color: this.state.todayButton, fontWeight: 'bold' }}>Todays date is April 13</Text>
             </DateRangeButton>
             <DateRangeButton color={this.state.todayButton} border={this.state.lastButton} onPress={this.todayToggle}>
               <Text style={{ color: this.state.lastButton, fontWeight: 'bold' }}>TODAY</Text>
@@ -98,59 +126,38 @@ class Dashboard extends React.Component {
         <View style={{ flexDirection: 'row', height: '20%', width: '100%', marginVertical: '2%', }}>
           <View style={{ paddingVertical: '2%', paddingLeft: '2%', paddingRight: '1%', width: '33%' }}>
             <SettingsCard style={{ flexDirection: 'row', height: "100%", width: "100%", }}>
-              <View style={{ backgroundColor: '#346199', padding: '.75%', marginLeft: '-2.5%', marginBottom: '-.5%', marginTop: '-1.5%', borderBottomLeftRadius: 8, borderTopLeftRadius: 8 }}></View>
+              <View style={{ backgroundColor: '#346199', padding: '1%', marginLeft: '-2.5%', marginBottom: '-.5%', marginTop: '-1.5%', borderBottomLeftRadius: 8, borderTopLeftRadius: 8 }}></View>
 
-              <View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: '4%', paddingTop: '3%' }}>
+              <View style={{ height: '100%' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: '4%', paddingVertical: '2%', height: '25%' }}>
                   <WidgetHeader color={this.state.darkgrey}>Today's Sales</WidgetHeader>
 
                 </View>
 
 
                 <View style={{
-                  justifyContent: 'center', paddingLeft: '4%', paddingRight: '2%', paddingTop: '1%'
+                  justifyContent: 'center', paddingLeft: '4%', paddingRight: '2%', height: '37%'
                 }}>
-                  <WidgetText color={this.state.blue} style={{ color: `${this.state.blue}` }}>${this.props.data.sales.total}</WidgetText>
+                  <WidgetText color={this.state.blue} style={{ color: `${this.state.blue}` }}>${this.props.dashboard.data.sales.total}</WidgetText>
 
 
-                  <View style={{ flexDirection: 'row', paddingVertical: '1%' }}>
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', paddingLeft: '0%', color: this.positiveGreenText(this.props.data.sales.previous) }}>+{this.props.data.sales.previous}% </Text>
+                  <View style={{ flexDirection: 'row', paddingVertical: '1%', }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', paddingLeft: '0%', color: this.positiveGreenText(this.props.dashboard.data.sales.previous) }}>+{this.props.dashboard.data.sales.previous}% </Text>
                     <Text style={{ fontSize: 12, color: this.state.lightGrey[1] }}>Since yesterday</Text>
                   </View>
-                  <View style={{
-                    position: 'absolute',
-                    left: '76%',
-                    top: '-25%',
-                    width: '10%',
-                    height: '52%',
-                    backgroundColor: 'white',
-                    alignSelf: 'center',
-                    borderRadius: 32,
-                    justifyContent: 'center',
-                    borderColor: '#24354a',
-                    borderWidth: 2.5,
-                    opacity: .2
-                  }}>
-                    <Image
-                      style={{ alignSelf: "center", width: '65%', height: '65%' }}
-                      source={require("../../../icons/dollar(blue).png")}
-                    />
-                  </View>
+
                 </View>
                 <View style={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginTop: '-1%',
-                  marginLeft: '-15%'
+                  height: '40%',
+                  paddingTop: '1%',
+                  marginLeft: '-14%'
                 }}>
                   <LineChart
                     data={{
                       labels: ["10am", "11am", "12pm", "1pm", "2pm", "3pm"],
                       datasets: [
                         {
-                          data: [
-                            4, 3, 7, 2, 4, 7
-                          ],
+                          data: this.props.dashboard.data.sales.weekly,
                           strokeWidth: 5,
 
                         }
@@ -198,64 +205,45 @@ class Dashboard extends React.Component {
 
           <View style={{ paddingVertical: '2%', paddingHorizontal: '1%', width: '33%', height: "100%" }}>
             <SettingsCard style={{ flexDirection: 'row', height: "100%", width: "100%", }}>
-              <View style={{ backgroundColor: this.state.orange[1], padding: '.75%', marginLeft: '-2.2%', marginBottom: '1%', marginTop: '-2%', borderBottomLeftRadius: 6, borderTopLeftRadius: 6 }}></View>
+              <View style={{ backgroundColor: this.state.orange[1], padding: '1%', marginLeft: '-2.5%', marginBottom: '-.5%', marginTop: '-1.5%', borderBottomLeftRadius: 8, borderTopLeftRadius: 8 }}></View>
 
-              <View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: '4%', paddingTop: '3%' }}>
-                  <WidgetHeader color={this.state.darkgrey} >Total Orders</WidgetHeader>
+              <View style={{ height: '100%' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: '4%', paddingVertical: '2%', height: '25%' }}>
+                  <WidgetHeader color={this.state.darkgrey}>Total Orders</WidgetHeader>
 
                 </View>
 
 
                 <View style={{
-                  justifyContent: 'center', paddingLeft: '4%', paddingRight: '2%', paddingTop: '1%'
+                  justifyContent: 'center', paddingLeft: '4%', paddingRight: '2%', height: '37%'
                 }}>
-                  <WidgetText color={this.state.blue}>{this.props.data.orders.total}</WidgetText>
-                  <View style={{ flexDirection: 'row', paddingVertical: '1%' }}>
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', paddingLeft: '0%', color: this.positiveGreenText(this.props.data.orders.previous) }}>+{this.props.data.orders.previous}% </Text>
+                  <WidgetText color={this.state.blue} style={{ color: `${this.state.blue}` }}>{this.props.dashboard.data.orders.total}</WidgetText>
+
+
+                  <View style={{ flexDirection: 'row', paddingVertical: '1%', }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', paddingLeft: '0%', color: this.positiveGreenText(this.props.dashboard.data.sales.previous) }}>+{this.props.dashboard.data.sales.previous}% </Text>
                     <Text style={{ fontSize: 12, color: this.state.lightGrey[1] }}>Since yesterday</Text>
                   </View>
-                  <View style={{
-                    position: 'absolute',
-                    left: '76%',
-                    top: '-25%',
-                    width: '10%',
-                    height: '52%',
-                    backgroundColor: 'white',
-                    alignSelf: 'center',
-                    borderRadius: 32,
-                    justifyContent: 'center',
-                    borderColor: '#24354a',
-                    borderWidth: 2,
-                    opacity: .3
-                  }}>
-                    <Image
-                      style={{ alignSelf: "center", width: '62%', height: '62%' }}
-                      source={require("../../../icons/list(blue).png")}
-                    />
-                  </View>
+
                 </View>
                 <View style={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginTop: '-0%',
-                  marginLeft: '-10%'
+                  height: '40%',
+                  paddingTop: '1%',
+                  marginLeft: '-14%'
                 }}>
                   <LineChart
                     data={{
                       labels: ["10am", "11am", "12pm", "1pm", "2pm", "3pm"],
                       datasets: [
                         {
-                          data: [
-                            5, 2, 2, 7, 3, 4
-                          ],
+                          data: this.props.dashboard.data.sales.weekly,
                           strokeWidth: 5,
 
                         }
                       ]
                     }}
-                    width={Dimensions.get("window").width / 2.9} // from react-native
-                    height={Dimensions.get('window').height / 15}
+                    width={Dimensions.get("window").width / 2.8} // from react-native
+                    height={Dimensions.get('window').height / 16}
                     withVerticalLabels={false}
                     withHorizontalLabels={false}
                     withInnerLines={false}
@@ -265,13 +253,13 @@ class Dashboard extends React.Component {
                       backgroundColor: `transparent`,
                       backgroundGradientFrom: this.state.orange[1],
                       backgroundGradientFromOpacity: 0,
-                      backgroundGradientTo: "#55bd93",
+                      backgroundGradientTo: this.state.orange[1],
                       backgroundGradientToOpacity: 0,
                       fillShadowGradient: this.state.orange[1],
                       fillShadowGradientOpacity: .3,
 
-                      color: (opacity = 1) => `white`,
-                      labelColor: (opacity = 1) => `${this.state.orange[1]}`,
+                      color: (opacity = 0) => `rgba(255, 255, 255, ${opacity})`,
+                      labelColor: (opacity = 1) => this.state.orange[1],
                       style: {
                         borderRadius: 16,
                         opacity: 0,
@@ -288,76 +276,59 @@ class Dashboard extends React.Component {
                       borderRadius: 16
                     }}
                   />
-                </View></View>
+                </View>
+
+              </View>
             </SettingsCard>
           </View>
           <View style={{ paddingVertical: '2%', paddingRight: '1%', paddingLeft: '1%', width: '33%', height: "100%" }}>
             <SettingsCard style={{ flexDirection: 'row', height: "100%", width: "100%", }}>
-              <View style={{ backgroundColor: this.state.lightBlue[1], padding: '.75%', marginLeft: '-2.2%', marginBottom: '1%', marginTop: '-2%', borderBottomLeftRadius: 6, borderTopLeftRadius: 6 }}></View>
+              <View style={{ backgroundColor: this.state.lightBlue[1], padding: '1%', marginLeft: '-2.5%', marginBottom: '-.5%', marginTop: '-1.5%', borderBottomLeftRadius: 8, borderTopLeftRadius: 8 }}></View>
 
-              <View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: '4%', paddingTop: '3%' }}>
-                  <WidgetHeader color={this.state.darkgrey} >Order Bump Rate</WidgetHeader>
+              <View style={{ height: '100%' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: '4%', paddingVertical: '2%', height: '25%' }}>
+                  <WidgetHeader color={this.state.darkgrey}>Order Bump Rate</WidgetHeader>
 
                 </View>
 
 
                 <View style={{
-                  justifyContent: 'center', paddingLeft: '4%', paddingRight: '2%', paddingTop: '1%'
+                  justifyContent: 'center', paddingLeft: '4%', paddingRight: '2%', height: '37%'
                 }}>
-                  <WidgetText color={this.state.blue}>{this.getBumpRate()}</WidgetText>
-                  <View style={{ flexDirection: 'row', paddingVertical: '1%' }}>
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', paddingLeft: '0%', color: this.positiveGreenText(4) }}>+{this.props.data.bump.previous}% </Text>
+                  <WidgetText color={this.state.blue} style={{ color: `${this.state.blue}` }}>{this.getBumpRate()}</WidgetText>
+
+
+                  <View style={{ flexDirection: 'row', paddingVertical: '1%', }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', paddingLeft: '0%', color: this.positiveGreenText(this.props.dashboard.data.sales.previous) }}>+{this.props.dashboard.data.sales.previous}% </Text>
                     <Text style={{ fontSize: 12, color: this.state.lightGrey[1] }}>Since yesterday</Text>
                   </View>
-                  <View style={{
-                    position: 'absolute',
-                    left: '76%',
-                    top: '-25%',
-                    width: '10%',
-                    height: '52%',
-                    backgroundColor: 'white',
-                    alignSelf: 'center',
-                    borderRadius: 32,
-                    justifyContent: 'center',
-                    borderColor: '#24354a',
-                    borderWidth: 2,
-                    opacity: .3
-                  }}>
-                    <Image
-                      style={{ alignSelf: "center", width: '65%', height: '65%' }}
-                      source={require("../../../icons/hourglass(darkBlue).png")}
-                    />
-                  </View>
+
                 </View>
                 <View style={{
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginTop: '-0%',
-                  marginLeft: '-10%'
+                  height: '40%',
+                  paddingTop: '1%',
+                  marginLeft: '-14%'
                 }}>
                   <LineChart
                     data={{
                       labels: ["10am", "11am", "12pm", "1pm", "2pm", "3pm"],
                       datasets: [
                         {
-                          data: [
-                            2, 2, 7, 9, 12, 3
-                          ],
+                          data: this.props.dashboard.data.sales.weekly,
                           strokeWidth: 5,
 
                         }
                       ]
                     }}
-                    width={Dimensions.get("window").width / 2.9} // from react-native
-                    height={Dimensions.get('window').height / 15}
+                    width={Dimensions.get("window").width / 2.8} // from react-native
+                    height={Dimensions.get('window').height / 16}
                     withVerticalLabels={false}
                     withHorizontalLabels={false}
                     withInnerLines={false}
                     yAxisInterval={1} // optional, defaults to 1
                     chartConfig={{
 
-                      backgroundColor: this.state.lightBlue[1],
+                      backgroundColor: `transparent`,
                       backgroundGradientFrom: this.state.lightBlue[1],
                       backgroundGradientFromOpacity: 0,
                       backgroundGradientTo: this.state.lightBlue[1],
@@ -365,8 +336,8 @@ class Dashboard extends React.Component {
                       fillShadowGradient: this.state.lightBlue[1],
                       fillShadowGradientOpacity: .3,
 
-                      color: (opacity = 1) => `white`,
-                      labelColor: (opacity = 1) => `${this.state.lightBlue[1]}`,
+                      color: (opacity = 0) => `rgba(255, 255, 255, ${opacity})`,
+                      labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
                       style: {
                         borderRadius: 16,
                         opacity: 0,
@@ -383,11 +354,13 @@ class Dashboard extends React.Component {
                       borderRadius: 16
                     }}
                   />
-                </View></View>
+                </View>
+
+              </View>
             </SettingsCard>
           </View></View>
 
-        <View style={{ flexDirection: "row", padding: "2%", paddingTop: '3%', height: "92%" }}>
+        <View style={{ flexDirection: "row", padding: "2%", paddingTop: '3%', height: "96%" }}>
           <View style={{ height: "50%", width: "60%", paddingRight: '1%' }}>
             <SettingsCard style={{ height: '100%', backgroundColor: 'white' }}>
 
@@ -404,12 +377,10 @@ class Dashboard extends React.Component {
               <View style={{ alignSelf: 'center', justifyContent: 'center', alignItems: 'center', marginRight: '4%', paddingVertical: '2%' }}>
                 <BarChart
                   data={{
-                    labels: ["10am", "11am", "12pm", "1pm", "2pm", "3pm", '4pm', '5pm', '6pm', '7pm', '8pm', '9pm', '10pm'],
+                    labels: this.props.dashboard.data.orders_per_hour.labels,
                     datasets: [
                       {
-                        data: [
-                          4, 3, 7, 12, 4, 2, 6, 12, 8, 5, 6, 3, 6
-                        ]
+                        data: this.props.dashboard.data.orders_per_hour.data
                       }
                     ]
                   }}
@@ -460,18 +431,18 @@ class Dashboard extends React.Component {
               <View style={{ alignItems: 'center', paddingVertical: '3%' }}>
                 <PieChart
                   chart_wh={Dimensions.get('window').height / 4.5}
-                  series={series}
+                  series={this.props.dashboard.data.category_sales.series}
                   sliceColor={sliceColor}
                   doughnut={true}
                 />
               </View>
               <View style={{ justifyContent: 'space-evenly', flexDirection: 'row', paddingVertical: '3%' }}>
-                {series.map((category, i) => (
+                {this.props.dashboard.data.category_sales.series.map((category, i) => (
                   <View key={i} style={{ justifyContent: 'space-evenly', alignItems: 'center' }}>
                     <Text style={{ fontSize: 18, fontWeight: '900' }}>{parseInt((category / total).toFixed(2) * 100)}%</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
                       <View style={{ backgroundColor: sliceColor[i], width: Dimensions.get("window").width / 150, height: Dimensions.get("window").width / 150, borderRadius: 32, }} />
-                      <Text style={{ paddingLeft: '1%', fontSize: 14, color: this.state.lightGrey[1], fontWeight: '900' }}>{categories[i]}</Text>
+                      <Text style={{ paddingLeft: '1%', fontSize: 14, color: this.state.lightGrey[1], fontWeight: '900' }}>{this.props.dashboard.data.category_sales.categories[i]}</Text>
                     </View>
 
                   </View>
@@ -487,11 +458,25 @@ class Dashboard extends React.Component {
   }
 }
 
+const mapStateToProps = state => ({
+  dashboard: state.dashboard,
+  tickets: state.tickets,
+  account: state.account
+})
 
-export default Dashboard;
+function mapDispatchToProps(dispatch, ownProps) {
+  return ({
+    GET_DASHBOARD: (ticket) => dispatch({ type: ADD_NEW, data: ticket }),
+  })
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Dashboard);
+
+
+
 const series = [123, 321, 123, 789, 537]
 const total = 1893
-const sliceColor = ['#F44336', '#2196F3', '#FFEB3B', '#4CAF50', '#FF9800']
+const sliceColor = ['#3D6DAE', '#0091C2', '#27A462', '#FF8C14', '#FFDE7D']
 const categories = ['Meals', 'Entrees', 'Sides', 'Other', 'Party Paks']
 const linedata = {
   labels: ['January', 'February', 'March', 'April', 'May', 'June'],
@@ -504,7 +489,7 @@ const linedata = {
 };
 
 const DateRangeButton = styled.TouchableOpacity`
-  width: 20%;
+  width: 24%;
   height: 2%;
   padding: 2%;
   background-color: ${props => props.color};
@@ -529,11 +514,9 @@ const SettingsCard = styled.View`
   box-shadow: 0 5px 0 rgba(0, 0, 0, 0.8);
 `;
 
-const TableText = styled.Text``;
-
 const WidgetHeader = styled.Text`
-  font-size: 15px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: bold; 
   color: ${props => props.color};
   paddingTop: 1%
 `;
@@ -546,262 +529,9 @@ const DescriptionText = styled.Text`
 `;
 
 const WidgetText = styled.Text`
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 900;
   color: ${props => props.color};
   paddingTop: 0%
 `;
 
-const orders = [
-  {
-    id: "1",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "Aaron",
-    orderNumber: "1",
-    lineItems: [
-      {
-        qty: 3,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 2
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      },
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      },
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      },
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "3",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "Aaron",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "Aaron",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "Aaron",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "Aaron",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "Aaron",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "Aaron",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "Aaron",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  }
-];
-
-const pieData = [
-  {
-    name: "Seoul",
-    population: 21500000,
-    color: "rgba(131, 167, 234, 1)",
-    legendFontColor: "#7F7F7F",
-    legendFontSize: 15
-  },
-  {
-    name: "Toronto",
-    population: 2800000,
-    color: "#F00",
-    legendFontColor: "#7F7F7F",
-    legendFontSize: 15
-  },
-  {
-    name: "Beijing",
-    population: 527612,
-    color: "red",
-    legendFontColor: "#7F7F7F",
-    legendFontSize: 15
-  },
-  {
-    name: "New York",
-    population: 8538000,
-    color: "#ffffff",
-    legendFontColor: "#7F7F7F",
-    legendFontSize: 15
-  },
-  {
-    name: "Moscow",
-    population: 11920000,
-    color: "rgb(0, 0, 255)",
-    legendFontColor: "#7F7F7F",
-    legendFontSize: 15
-  }
-];

@@ -13,29 +13,48 @@ import SwitchToggle from "react-native-switch-toggle";
 import Header from "../../Header";
 import AnimatedTicket from "../../AnimatedTicket";
 
+
 const CompletedOrders = props => (
   <View style={{ height: "100%" }}>
-    <View style={{ padding: "2%", height: "8%", justifyContent: "center" }}>
-      <SettingsCard style={{}}>
-        <Text>Orders</Text>
-      </SettingsCard>
-    </View>
+    <View style={{
+      flexDirection: 'row',
+      paddingLeft: '4%',
+      paddingRight: '2%',
+      paddingTop: '2%',
+      justifyContent: "space-between",
+      alignItems: 'flex-end'
+    }}>
+      <View style={{ width: '50%' }}>
+        <Text style={{ fontSize: 22 }}>Completed Orders</Text>
+        <Text style={{ paddingTop: '0%', color: 'darkgrey', fontWeight: 'bold' }} color='darkgrey'>Completed Orders</Text>
+      </View>
 
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', width: '50%' }}>
+        <DateRangeButton color={props.lastColor} border={props.todayColor} onPress={props.lastToggle} style={{ fontWeight: 'bold' }}>
+          <Text style={{ color: props.todayColor, fontWeight: 'bold' }}>YESTERDAY</Text>
+        </DateRangeButton>
+        <DateRangeButton color={props.todayColor} border={props.lastColor} onPress={props.todayToggle}>
+          <Text style={{ color: props.lastColor, fontWeight: 'bold' }}>TODAY</Text>
+        </DateRangeButton>
+      </View>
+
+    </View>
     <View
       style={{
         flexDirection: "row",
         height: "100%",
         width: "100%",
-        borderBottomWidth: 0.25
+        borderBottomWidth: 0.25,
+        paddingVertical: '2%'
       }}
     >
-      <View style={{ flexDirection: "column", width: "65%", padding: "2%" }}>
-        <SettingsCard>
+      <View style={{ flexDirection: "column", width: "65%", height: '80%', padding: "2%" }}>
+        <SettingsCard style={{ backgroundColor: 'white' }}>
           <View
             style={{
               flexDirection: "row",
               justifyContent: "space-between",
-              padding: 12,
+              padding: '1%',
               paddingHorizontal: 24,
               alignItems: "center"
             }}
@@ -47,23 +66,23 @@ const CompletedOrders = props => (
               }}
             >
               <View>
-                <TableText style={{ borderBottomWidth: 1 }}>Today</TableText>
+                <TableText style={{ borderBottomWidth: 1 }}></TableText>
               </View>
               <View style={{}}></View>
             </View>
           </View>
 
-          <View style={{ paddingHorizontal: 12, paddingVertical: 4 }}>
+          <View style={{ paddingHorizontal: '1%', paddingVertical: '.5%' }}>
             <View style={{ flexDirection: "row" }}></View>
             <View></View>
           </View>
           <View style={{ flexDirection: "row" }}>
-            <View style={{ width: "100%", paddingHorizontal: 18 }}>
+            <View style={{ width: "100%", paddingHorizontal: '2%' }}>
               <Categories
                 style={{
                   width: "100%",
                   flexDirection: "row",
-                  paddingHorizontal: 24,
+                  paddingHorizontal: '3%',
                   borderColor: "grey",
                   borderBottomWidth: 0.5
                 }}
@@ -81,11 +100,12 @@ const CompletedOrders = props => (
                   <CategoryText>Line-Items</CategoryText>
                 </LineItems>
               </Categories>
+
               <View style={{ paddingTop: 3 }}>
-                {orders
+                {props.completed
                   .slice(props.selectedPage * 9, props.selectedPage * 9 + 9)
                   .map((order, i) => (
-                    <View key={i} style={{ paddingVertical: 2 }}>
+                    <View key={i} style={{ paddingVertical: '.25%' }}>
                       <TouchableOpacity
                         onPress={() => props.selectItem(order.id)}
                       >
@@ -109,7 +129,7 @@ const CompletedOrders = props => (
                               <Text
                                 style={{
                                   textAlign: "center",
-                                  paddingRight: 12
+                                  paddingRight: '1%'
                                 }}
                               >
                                 >
@@ -117,26 +137,26 @@ const CompletedOrders = props => (
                             </View>
                           </TableRow>
                         ) : (
-                          <TableRow>
-                            <Time>
-                              <TableText>{order.createdTime}</TableText>
-                            </Time>
-                            <OrderNumber>
-                              <TableText>{order.orderNumber}</TableText>
-                            </OrderNumber>
-                            <OrderType>
-                              <TableText>{order.orderType}</TableText>
-                            </OrderType>
-                            <LineItems>
-                              {order.lineItems.map((lineItem, i) => (
-                                <TableText key={i}>{lineItem.item}, </TableText>
-                              ))}
-                            </LineItems>
-                            <View>
-                              <Text style={{ textAlign: "right" }}></Text>
-                            </View>
-                          </TableRow>
-                        )}
+                            <TableRow>
+                              <Time>
+                                <TableText>{order.createdTime}</TableText>
+                              </Time>
+                              <OrderNumber>
+                                <TableText>{order.orderNumber}</TableText>
+                              </OrderNumber>
+                              <OrderType>
+                                <TableText>{order.orderType}</TableText>
+                              </OrderType>
+                              <LineItems>
+                                {order.lineItems.map((lineItem, i) => (
+                                  <TableText key={i}>{lineItem.item}, </TableText>
+                                ))}
+                              </LineItems>
+                              <View>
+                                <Text style={{ textAlign: "right" }}></Text>
+                              </View>
+                            </TableRow>
+                          )}
                       </TouchableOpacity>
                     </View>
                   ))}
@@ -148,7 +168,7 @@ const CompletedOrders = props => (
                   flexDirection: "row"
                 }}
               >
-                {orders
+                {props.completed
                   .slice(props.selectedPage, props.pages)
                   .map((page, i) => (
                     <View key={i} style={{ paddingLeft: 8 }}>
@@ -169,6 +189,7 @@ const CompletedOrders = props => (
                     </View>
                   ))}
               </View>
+
             </View>
           </View>
         </SettingsCard>
@@ -183,7 +204,7 @@ const CompletedOrders = props => (
           borderColor: "grey",
           flexDirection: "column",
           paddingVertical: 12,
-          paddingRight: 12
+          paddingHorizontal: '2%'
         }}
       >
         <View
@@ -193,7 +214,7 @@ const CompletedOrders = props => (
             paddingVertical: 12
           }}
         >
-          <SettingsCard
+          {(props.selectedItem === 'none') ? (<SettingsCard
             style={{
               alignItems: "center",
               height: "85%",
@@ -202,12 +223,38 @@ const CompletedOrders = props => (
           >
             <View
               style={{
-                paddingHorizontal: 18,
+                paddingHorizontal: '3%',
                 paddingVertical: 12,
-                alignSelf: "flex-start"
+                alignSelf: "center"
               }}
             >
-              <Text style={{ textAlign: "center", fontSize: 16 }}>
+              <Text style={{ textAlign: "center", fontSize: 16, fontWeight: '900' }}>
+                Selected Ticket
+              </Text>
+              <Text
+                style={{ textAlign: "center", fontSize: 14, color: "grey" }}
+              >
+                To start, select a ticket on the right
+              </Text>
+            </View>
+
+
+
+          </SettingsCard>) : (<SettingsCard
+            style={{
+              alignItems: "center",
+              height: "85%",
+              backgroundColor: "#fffff7"
+            }}
+          >
+            <View
+              style={{
+                paddingHorizontal: '3%',
+                paddingVertical: 12,
+                alignSelf: "center"
+              }}
+            >
+              <Text style={{ textAlign: "center", fontSize: 16, fontWeight: '900' }}>
                 Selected Ticket
               </Text>
               <Text
@@ -227,28 +274,54 @@ const CompletedOrders = props => (
               orderTypes={props.orderTypes}
               buttonIcon={require("../../../icons/undo.png")}
               buttonLabel="UNDO"
+              enabled='false'
             />
-            <View style={{ alignSelf: "flex-start", padding: 24 }}>
-              <View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignSelf: "flex-start", alignItems: 'center', padding: '4%', paddingVertical: '15%' }}>
+              <View style={{ width: '65%' }}>
                 <TableText style={{ textAlign: "left", fontSize: 14 }}>
                   Order ID: {props.selectedItem.id}
                 </TableText>
                 <TableText style={{ textAlign: "left", fontSize: 14 }}>
-                  Server: {props.selectedItem.id}
+                  Server: {props.selectedItem.employee}
                 </TableText>
                 <TableText style={{ textAlign: "left", fontSize: 14 }}>
                   Sales: {props.selectedItem.id}
                 </TableText>
+                <TableText style={{ textAlign: "left", fontSize: 14 }}>
+                  Bump Time: {parseInt(props.selectedItem.bumpDelay / 60)}m {parseInt(props.selectedItem.bumpDelay % 60)}s
+                </TableText>
               </View>
 
-              <Text
-                style={{ textAlign: "left", fontSize: 14, color: "grey" }}
-              ></Text>
+
+              <View style={{ width: '35%', alignSelf: 'center' }}>
+                <View style={{ width: '100%', alignItems: 'center' }}>
+                  <TouchableOpacity onPress={() => {
+                    props.undoSettings(props.selectedItem.id);
+                    props.checkCompleted()
+
+                  }}>
+                    <LinearGradient
+                      colors={["#ff884d", "#ff7152"]}
+                      start={[1, 1]}
+                      style={{
+                        padding: '28%',
+                        paddingVertical: '10%',
+                        borderRadius: 4,
+
+                      }}>
+                      <Text style={{ color: 'white', textAlign: 'center', fontWeight: 'bold' }}>UNDO</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-          </SettingsCard>
+
+          </SettingsCard>)}
+
         </View>
       </View>
     </View>
+
     <View style={{ flexDirection: "row" }}>
       <View
         style={{ padding: 24, paddingVertical: 12, alignSelf: "flex-start" }}
@@ -273,14 +346,26 @@ const CompletedOrders = props => (
           Order #: {props.selectedItem.orderNumber}
         </Text>
         <Text style={{ textAlign: "left" }}>
-          Server: {props.selectedItem.employee}
+          Server : {props.selectedItem.employee}
         </Text>
       </View>
     </View>
-  </View>
+  </View >
 );
 
 export default CompletedOrders;
+
+const DateRangeButton = styled.TouchableOpacity`
+  width: 24%;
+  height: 2%;
+  padding: 2%;
+  background-color: ${props => props.color};
+  border-color: ${props => props.border};
+  border-width: .5;
+  border-radius: 4;
+  elevation: 0;
+  align-items: center
+`
 
 const SettingsContainer = styled.View`
   background-color: #fffff7;
@@ -345,218 +430,3 @@ const CategoryText = styled.Text`
   elevation: 3;
 `;
 
-const orders = [
-  {
-    id: "1",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "1",
-    lineItems: [
-      {
-        qty: 3,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 2
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      },
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      },
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      },
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "3",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  }
-];

@@ -16,22 +16,27 @@ import MyAccount from "./MyAccount/MyAccount";
 import Orders from "./Orders/Orders";
 import Dashboard from "./Dashboard/Dashboard";
 import axios from "axios";
+import { connect } from 'react-redux'
+import { GET_DASHBOARD } from '../../actions/dashboard'
+import { LOG_OUT } from '../../actions/settings'
 
 class Menu extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      menuPos: new Animated.Value(0),
       switchOn: false,
       selectedPage: 0,
       selectedCategory: 0,
-      selectedItem: orders[0],
-      pages: parseInt(orders.length / 9) + 1,
-      merchantId: this.props.merchantId,
-      code: this.props.code,
+      selectedItem: 'none',
+      pages: parseInt(this.props.tickets.completed.length / 9) + 1,
+      merchantId: this.props.account.merchantId,
+      code: this.props.account.code,
       data: {
         sales: {
           previous: 0,
-          total: 0
+          total: 0,
+          weekly: [0, 0, 0, 0, 0, 0]
         },
         orders: {
           previous: 0
@@ -41,62 +46,60 @@ class Menu extends React.Component {
           previous: 0,
           total: 0
         },
+        orders_per_hour: {
+          labels: ['0'],
+          data: [0]
+        },
         category_sales: {
-          categories: [],
-          series: []
+          categories: ['none'],
+          series: [0]
         }
       },
       sales: 2423.24,
       averageWait: '5m 3s'
     };
     this.menuToggle = this.props.menuToggle.bind(this);
-    this.selectItem = this.selectItem.bind(this);
     this.selectPage = this.selectPage.bind(this);
     this.pageSelect = this.pageSelect.bind(this);
-    this.getDate = this.getDate.bind(this)
-    this.setSelected();
-    this.getDate()
+    this.animatedValue = new Animated.Value(-100)
 
+
+    this.MenuAnimate = this.MenuAnimate.bind(this)
+    this.MenuAnimate()
+    this.checkCompleted = this.checkCompleted.bind(this)
+    this.undo = this.undo.bind(this)
+    this.props.GET_DASHBOARD(this.props.account.merchantId, this.props.account.code)
+    this.log = this.log.bind(this)
+  }
+
+  checkCompleted() {
+    this.setState({
+      selectedItem: 'none'
+    })
 
 
   }
 
-  getDate(days = 1) {
-    var month = new Date().getMonth() + 1
-    var day = new Date().getDate()
-    var year = new Date().getFullYear()
-    var date_str = year + '/' + month + '/' + day
-    var date = new Date(date_str).getTime() / 1000
-    var tomorrow = (60 * 60 * 24 * days) + date
+
+  saveBumpDelay() {
 
     var self = this;
-
     axios
-      .get(`https://rocky-thicket-13861.herokuapp.com/api/getDashboard/`, {
+      .get(`https://rocky-thicket-13861.herokuapp.com/api/saveBumpDelay/`, {
         params: {
-          merchant_id: `${this.state.merchantId}`,
-          code: `${this.state.code}`,
-          start_time: date,
-          end_time: tomorrow
+          merchant_id: this.props.account.merchantId,
+          code: this.props.account.code,
+          completed: JSON.stringify(this.props.tickets.completed.slice(0, 50))
         }
-      })
-      .then(response => {
-
-        var data = (JSON.parse(response.data));
-        self.setState({
-          data: data
-        })
-        console.log(data)
-
-      })
-      .catch(function (err) {
+      }).catch(function (err) {
         console.log("error: ", err);
       });
-
-
-
-
   }
+
+
+
+
+
 
   setSelected = async () => {
     try {
@@ -120,19 +123,7 @@ class Menu extends React.Component {
     }
   };
 
-  getSelected = async () => {
-    try {
-      var selectedSettings = await AsyncStorage.getItem("settings");
-      if (selectedSettings == null) {
-        console.log("nothing");
-      } else {
-        this.setState({ settings: JSON.parse(selectedSettings) });
 
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
   switchToggle() {
     this.setState({ switchOn: !this.state.switchOn });
   }
@@ -141,24 +132,32 @@ class Menu extends React.Component {
     this.setState({ selectedCategory: id });
   }
 
-  selectItem(id) {
-    selected = orders.find(order => order.id === id);
-    this.setState({ selectedItem: selected });
-  }
 
   selectPage(id) {
     this.setState({ selectedPage: id });
     console.log(id);
   }
 
+  MenuAnimate() {
+    Animated.timing(this.animatedValue, {
+      toValue: 1,
+      duration: 2000
+    }).start()
+  }
+
+  undo = (id) => this.props.undoSettings(id)
+  log = () => (this.props.LOG_OUT(), this.props.menuToggle(), this.props.loggedInToggle())
+
+
+
   pageSelect() {
     if (this.state.selectedCategory === 0) {
+
 
 
       return (
 
         <Dashboard
-          done={id => this.props.doneButton(id)}
           width={this.props.width}
           typeColors={typeColors}
           employees={employees}
@@ -170,7 +169,6 @@ class Menu extends React.Component {
           selectedPage={this.state.selectedPage}
           sales={this.state.sales}
           averageWait={this.state.averageWait}
-          data={this.state.data}
         />
       );
 
@@ -179,25 +177,42 @@ class Menu extends React.Component {
     } else if (this.state.selectedCategory === 1) {
       return (
         <Orders
-          done={id => this.props.doneButton(id)}
           width={this.props.width}
-          typeColors={typeColors}
+          typeColors={this.props.typeColors}
           employees={employees}
-          orderTypes={orderTypes}
+          orderTypes={this.props.orderTypes}
           selectItem={this.selectItem}
           selectedItem={this.state.selectedItem}
           pages={this.state.pages}
           selectPage={this.selectPage}
           selectedPage={this.state.selectedPage}
+          undoSettings={this.undo}
+          checkCompleted={this.checkCompleted}
         />
       );
     } else if (this.state.selectedCategory === 2) {
-      return <Settings settings={this.state.settings} />;
+      return <Settings />;
+    } else if (this.state.selectedCategory === 3) {
+      return <MyAccount />
     }
   }
 
+  componentDidMount() {
+    Animated.timing(this.animatedValue, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true
+    }).start();
+  }
 
   render() {
+    const translate_Animation_Object = this.animatedValue.interpolate({
+      inputRange: [0, 0.5, 0.75],
+      outputRange: [0, 0.5, 1]
+    });
+
+    console.log('Menu rerender')
+
     return (
       <LinearGradient
         colors={["#edf4ff", "#edf4ff"]}
@@ -206,122 +221,186 @@ class Menu extends React.Component {
           height: "100%"
         }}
       >
-        <View
-          style={{
-            height: "22%",
-            width: "100%",
-            //backgroundColor: "#8097b0",
-            backgroundColor: "#edf4ff",
-            position: "absolute"
-          }}
-        ></View>
-        <ContainerRow>
-          <Sidebar>
-            <View
-              style={{
-                height: "8%",
-                borderBottomWidth: 0.75,
-                borderColor: "#93a9bd"
-              }}
-            />
-            <View
-              style={{
-                height: "2%"
-              }}
-            ></View>
-            {tabs.map((tab, i) => (
-              <TouchableOpacity
-                key={i}
-                onPress={() => this.selectCategory(i)}
-                style={{ height: "10%" }}
-              >
-                {this.state.selectedCategory === i ? (
-                  <View
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      alignContent: "center"
-                    }}
+        <View style={{ flexDirection: 'row', height: '100%' }}>
+          <Animated.View
+            style={{
+              width: "8.5%",
+              height: '100%',
+              transform: [{ translateX: translate_Animation_Object }],
+              //backgroundColor: "#8097b0",
+              backgroundColor: "#edf4ff",
+              position: "relative"
+            }}
+          >
+            <ContainerRow>
+              <Sidebar>
+                <View
+                  style={{
+                    height: "10%",
+                    borderBottomWidth: 0.75,
+                    borderColor: "#93a9bd",
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                >
+                  <Text style={{ color: 'white' }}></Text>
+                  <CategoryIcon source={require('../../icons/back(white).png')}></CategoryIcon>
+                </View>
+                <View
+                  style={{
+                    height: "2%"
+                  }}
+                ></View>
+                {tabs.map((tab, i) => (
+                  <TouchableOpacity
+                    key={i}
+                    onPress={() => this.selectCategory(i)}
+                    style={{ height: "12%" }}
                   >
-                    <View
-                      style={{
-                        alignContent: "center",
-                        alignItems: "center",
-                        alignSelf: "center",
-                        justifyContent: "center",
-                        height: "90%",
-                        width: "100%",
-                        backgroundColor: "#edf4ff",
-                        borderRadius: 8
-                      }}
-                    >
-                      <CategoryIcon source={tab.icon}></CategoryIcon>
-                      <View style={{ paddingTop: "5%" }}>
-                        <Text>{tab.label}</Text>
-                      </View>
-                    </View>
-
-                    {tab.lines.map((setting, i) => (
-                      <SettingsLine key={i}>
-                        <SettingsText>{setting}</SettingsText>
-                      </SettingsLine>
-                    ))}
-                  </View>
-                ) : (
-                    <View
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        alignContent: "center"
-                      }}
-                    >
+                    {this.state.selectedCategory === i ? (
                       <View
                         style={{
-                          alignContent: "center",
-                          alignItems: "center",
-                          height: "100%",
                           width: "100%",
+                          height: "100%",
+                          alignItems: "center",
                           justifyContent: "center",
-                          alignSelf: "center"
+                          alignContent: "center"
                         }}
                       >
-                        <CategoryIcon source={tab.iconGrey}></CategoryIcon>
-                        <View style={{ paddingTop: "5%" }}>
-                          <Text style={{ color: "#B6BAC9" }}>{tab.label}</Text>
+                        <View
+                          style={{
+                            alignContent: "center",
+                            alignItems: "center",
+                            alignSelf: "center",
+                            justifyContent: "center",
+                            height: "90%",
+                            width: "80%",
+                            backgroundColor: "#edf4ff",
+                            borderRadius: 8
+                          }}
+                        >
+                          <CategoryIcon source={tab.icon}></CategoryIcon>
+                          <View style={{ paddingTop: "5%" }}>
+                            <Text>{tab.label}</Text>
+                          </View>
                         </View>
+
+                        {tab.lines.map((setting, i) => (
+                          <SettingsLine key={i}>
+                            <SettingsText>{setting}</SettingsText>
+                          </SettingsLine>
+                        ))}
                       </View>
-                      {tab.lines.map((setting, i) => (
-                        <SettingsLine key={i}>
-                          <SettingsText>{setting}#B6BAC9</SettingsText>
-                        </SettingsLine>
-                      ))}
-                    </View>
-                  )}
-              </TouchableOpacity>
-            ))}
-          </Sidebar>
+                    ) : (
+                        <View
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            alignContent: "center"
+                          }}
+                        >
+                          <View
+                            style={{
+                              alignContent: "center",
+                              alignItems: "center",
+                              height: "100%",
+                              width: "100%",
+                              justifyContent: "center",
+                              alignSelf: "center"
+                            }}
+                          >
+                            <CategoryIcon source={tab.iconGrey}></CategoryIcon>
+                            <View style={{ paddingTop: "5%" }}>
+                              <Text style={{ color: "#B6BAC9" }}>{tab.label}</Text>
+                            </View>
+                          </View>
+                          {tab.lines.map((setting, i) => (
+                            <SettingsLine key={i}>
+                              <SettingsText>{setting}#B6BAC9</SettingsText>
+                            </SettingsLine>
+                          ))}
+                        </View>
+                      )}
 
-          <View width="91.5%">
+                  </TouchableOpacity>
 
+                ))}
+
+                <View style={{ height: '22%' }} />
+                <View
+                  style={{
+                    alignSelf: 'flex-end',
+                    alignContent: "center",
+                    alignItems: "center",
+                    width: "100%",
+                    justifyContent: "center",
+                    paddingTop: '20%',
+
+                  }}
+                >
+                  <View
+                    style={{
+                      height: '37%',
+                      width: '80%',
+                      borderRadius: 8,
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      borderColor: 'white',
+                      borderWidth: 1,
+
+                    }}>
+                    <TouchableOpacity onPress={this.log}>
+                      <View style={{ justifyContent: 'center' }}>
+                        <Text style={{ color: "white", textAlign: 'center', fontWeight: 'bold' }}>LOGOUT</Text>
+                      </View>
+                    </TouchableOpacity>
+
+                  </View>
+                </View>
+              </Sidebar></ContainerRow>
+
+          </Animated.View>
+          <View style={{ width: '91.5%' }}>
             {this.pageSelect()}
           </View>
-        </ContainerRow>
-      </LinearGradient>
+
+        </View>
+
+
+      </LinearGradient >
     );
   }
 }
+function mapStateToProps(state) {
+  return {
+    account: state.account,
+    tickets: state.tickets,
+    dashboard: state.dashboard
+  }
+}
 
-export default Menu;
+
+function mapDispatchToProps(dispatch, ownProps) {
+  return ({
+    GET_DASHBOARD: (merchantId, code) => dispatch(GET_DASHBOARD(merchantId, code)),
+    LOG_OUT: () => dispatch(LOG_OUT())
+  })
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Menu);
+
+
+
+
+
 
 const orderTypes = { P3TPJPZ0Z21B6: "Togo", "6Z7C2VFZT3ZX2": "Dine-in" };
 
 const typeColors = {
-  P3TPJPZ0Z21B6: ["#4c85ba", "#346199"],
-  "6Z7C2VFZT3ZX2": ["#4c85ba", "#346199"]
+  Togo: ["#4c85ba", "#346199"],
+  "Dine-in": ["#4c85ba", "#346199"]
 };
 
 const employees = {
@@ -343,6 +422,7 @@ const SettingsContainer = styled.View`
 
 const ContainerRow = styled.View`
   flex-direction: row;
+  height: 100%
 `;
 
 const Container = styled.View`
@@ -353,7 +433,7 @@ const Container = styled.View`
 `;
 
 const Sidebar = styled.View`
-  width: 8.5%;
+  width: 100%;
   height: 100%;
   border-color: grey;
   background-color: #24354a;
@@ -404,232 +484,6 @@ const tabs = [
     label: "Settings",
     lines: []
   },
-  {
-    icon: require("../../icons/question.png"),
-    iconGrey: require("../../icons/question(grey).png"),
-    label: "Help",
-    lines: []
-  },
-  {
-    icon: require("../../icons/logout.png"),
-    iconGrey: require("../../icons/logout(grey).png"),
-    label: "Logout",
-    lines: []
-  }
-];
-const orders = [
-  {
-    id: "1",
-    createdTime: 1574561334000,
-    time: "10:00am",
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "1",
-    lineItems: [
-      {
-        qty: 3,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 2
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      },
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      },
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      },
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          },
-          {
-            name: "Bean",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "3",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: "2",
-    createdTime: 1574561334000,
-    orderType: "6Z7C2VFZT3ZX2",
-    employee: "NB0BPBVDEQBKW",
-    orderNumber: "15",
-    lineItems: [
-      {
-        qty: 1,
-        item: "MINI",
-        mods: [
-          {
-            name: "Rice",
-            amount: 0,
-            qty: 1
-          }
-        ]
-      }
-    ]
-  }
+
+
 ];

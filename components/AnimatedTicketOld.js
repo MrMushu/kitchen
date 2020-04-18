@@ -16,7 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
 import { Transition, animated } from "react-spring/renderprops";
 
-class AnimatedTicket extends React.PureComponent {
+class AnimatedTicket extends React.Component {
   constructor(props) {
     super(props);
     this.ticket4 = [];
@@ -269,7 +269,7 @@ class AnimatedTicket extends React.PureComponent {
                   style={{
                     color: `${
                       this.props.typeColors[this.props.item.orderType][1]
-                    }`,
+                      }`,
                     fontWeight: "bold"
                   }}
                 >
