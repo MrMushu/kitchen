@@ -65,7 +65,7 @@ class Settings extends React.Component {
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          style={{ padding: "2%" }}
+          style={{ padding: "2%", }}
         >
           <View style={{ flexDirection: 'row', paddingTop: '2%', paddingVertical: '2%', paddingLeft: '2%', justifyContent: "space-between", alignItems: 'flex-end' }}>
             <View style={{ width: '80%' }}>
@@ -426,15 +426,18 @@ class Settings extends React.Component {
               ))}
             </View>
           </SettingsCard>
+          <View></View>
+          <SettingsCard>
+            <SectionContainer>
+              <SectionText>Font-Size</SectionText>
+              <SectionSubText>Adjusts the font-size of tickets</SectionSubText>
+            </SectionContainer>
+          </SettingsCard>
 
-          <SectionContainer>
-            <SectionText>Font-Size</SectionText>
-            <SectionSubText>Adjusts the font-size of tickets</SectionSubText>
-          </SectionContainer>
 
           <ContainerRow>
             {fontSizes.map((size, i) => (
-              <View key={i} style={{ width: "25%", padding: 12 }}>
+              <View key={i} style={{ width: "25%" }}>
                 <FontCard>
                   <Text
                     style={{

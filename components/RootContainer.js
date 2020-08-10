@@ -22,6 +22,7 @@ import _ from 'lodash'
 
 import { ADD_NEW, UPDATE } from '../actions/tickets'
 import { connect } from 'react-redux'
+import Success from "./Success";
 
 const screenHeight = Dimensions.get('screen').height;
 const windowHeight = Dimensions.get('window').height;
@@ -39,9 +40,10 @@ class RootContainer extends React.Component {
             loggedIn: false,
             loading: false,
             menu: false,
-            showTickets: true,
+            showTickets: false,
             display8: true,
-            checkLimit: false
+            checkLimit: false,
+
         };
 
         this.menuToggle = this.menuToggle.bind(this);
@@ -111,7 +113,10 @@ class RootContainer extends React.Component {
 
         websocket.onclose = () => {
             (this.state.message = "closed... attempting to reconnect",
-                this.setupWebSocket())
+
+                setTimeout(() => { this.setupWebSocket() }, 5000)
+
+            )
         }
     }
 
@@ -136,16 +141,17 @@ class RootContainer extends React.Component {
                 h => h.createdTime / 1000 >= pastHour
             );
             var hourIds = hourOrders.map(o => o.id);
-            websocket.send(
-                JSON.stringify({
-                    type: "receive",
-                    merchantId: this.props.account.merchantId,
+
+            axios
+                .post(`https://rocky-thicket-13861.herokuapp.com/api/checkOrders/`, {
+                    merchant_id: this.props.account.merchantId,
                     code: this.props.account.code,
-                    token: this.props.account.token,
-                    datafrom: "check",
-                    hourOrders: hourIds
-                })
-            )
+                    hourOrders: hourIds,
+
+                }).catch(function (err) {
+                    console.log("error: ", err);
+                });
+
         } else {
             return
         }
@@ -153,6 +159,7 @@ class RootContainer extends React.Component {
     }
 
     menuToggle() {
+
         var ticketToggle = !this.state.showTickets;
         this.setState({ showTickets: ticketToggle });
         var toggle = !this.state.menu;
@@ -220,8 +227,9 @@ class RootContainer extends React.Component {
     }
 
     loggedInToggle() {
-
+        this.setState({ loading: !this.state.loading })
         this.setState({ loggedIn: !this.state.loggedIn })
+
     }
 
 
@@ -232,14 +240,15 @@ class RootContainer extends React.Component {
         console.log('root rendered')
         return (
             <View style={{ height: '100%', }}>
-                {this.state.loggedIn ? (
 
-                    <Header
-                        menuToggle={this.menuToggle}
-                        refresh={this.checkOrders}
-                        loading={this.state.loggedIn}
-                    />
-                ) : null}
+
+
+                <Header
+                    menuToggle={this.menuToggle}
+                    refresh={this.checkOrders}
+                    loading={this.state.loggedIn}
+                />
+
 
 
                 {this.state.menu ? (
@@ -250,31 +259,32 @@ class RootContainer extends React.Component {
                         code={this.state.code}
                         loggedInToggle={this.loggedInToggle}
                     />) : null}
-                {this.state.loading ? <Loading></Loading> : null}
-                {!this.state.loggedIn ? (
-                    <View style={{ height: "100%" }}>
-                        <Login loggedInToggle={(this.loggedInToggle, this.startWebsocket)} />
-                    </View>
-                ) : (
-                        null
-                    )}
-                {this.state.showTickets ? (
-                    <LinearGradient
-                        start={[1, 1]}
-                        colors={["#edf4ff", "#edf7ff"]}
-                        style={{ paddingTop: 4, paddingBottom: navbarHeight }}
-                    >
-                        <Tickets
-                            width={this.state.width}
-                            display8={this.state.display8}
-                        />
-
-                        <Footer message={this.state.message} note={this.state.note} />
 
 
 
-                    </LinearGradient>
-                ) : (null)}
+
+                <LinearGradient
+                    start={[1, 1]}
+                    colors={["#edf4ff", "#edf7ff"]}
+                    style={{ paddingTop: 4, paddingBottom: navbarHeight }}
+                >
+
+                    <Tickets
+                        width={this.state.width}
+                        display8={this.state.display8}
+                    />
+
+                    <Footer message={this.state.message} note={this.state.note} />
+
+
+
+                </LinearGradient>
+                <Success loading={this.state.loading} />
+
+                <Login loggedInToggle={(this.loggedInToggle)} loggedIn={this.state.loggedIn} startWebsocket={this.startWebsocket} />
+
+
+
             </View>
 
         );

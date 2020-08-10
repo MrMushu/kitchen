@@ -27,7 +27,7 @@ class Menu extends React.Component {
       menuPos: new Animated.Value(0),
       switchOn: false,
       selectedPage: 0,
-      selectedCategory: 0,
+      selectedCategory: 1,
       selectedItem: 'none',
       pages: parseInt(this.props.tickets.completed.length / 9) + 1,
       merchantId: this.props.account.merchantId,
@@ -62,10 +62,9 @@ class Menu extends React.Component {
     this.selectPage = this.selectPage.bind(this);
     this.pageSelect = this.pageSelect.bind(this);
     this.animatedValue = new Animated.Value(-100)
+    this.animatedOpacity = new Animated.Value(1)
 
 
-    this.MenuAnimate = this.MenuAnimate.bind(this)
-    this.MenuAnimate()
     this.checkCompleted = this.checkCompleted.bind(this)
     this.undo = this.undo.bind(this)
     this.props.GET_DASHBOARD(this.props.account.merchantId, this.props.account.code)
@@ -138,12 +137,22 @@ class Menu extends React.Component {
     console.log(id);
   }
 
-  MenuAnimate() {
+  home = () => {
+
+
     Animated.timing(this.animatedValue, {
-      toValue: 1,
-      duration: 2000
+      toValue: -150,
+      duration: 200,
+      useNativeDriver: true
     }).start()
+
+    setTimeout(() => {
+      this.props.menuToggle()
+
+    }, 150);
+
   }
+
 
   undo = (id) => this.props.undoSettings(id)
   log = () => (this.props.LOG_OUT(), this.props.menuToggle(), this.props.loggedInToggle())
@@ -152,8 +161,6 @@ class Menu extends React.Component {
 
   pageSelect() {
     if (this.state.selectedCategory === 0) {
-
-
 
       return (
 
@@ -211,87 +218,59 @@ class Menu extends React.Component {
       outputRange: [0, 0.5, 1]
     });
 
+    const translate_Animation_Opacity = this.animatedOpacity.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0, 0.5, 1]
+    });
+
     console.log('Menu rerender')
 
     return (
-      <LinearGradient
-        colors={["#edf4ff", "#edf4ff"]}
-        style={{
-          width: "100%",
-          height: "100%"
-        }}
-      >
-        <View style={{ flexDirection: 'row', height: '100%' }}>
-          <Animated.View
-            style={{
-              width: "8.5%",
-              height: '100%',
-              transform: [{ translateX: translate_Animation_Object }],
-              //backgroundColor: "#8097b0",
-              backgroundColor: "#edf4ff",
-              position: "relative"
-            }}
-          >
-            <ContainerRow>
-              <Sidebar>
-                <View
-                  style={{
-                    height: "10%",
-                    borderBottomWidth: 0.75,
-                    borderColor: "#93a9bd",
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}
-                >
-                  <Text style={{ color: 'white' }}></Text>
-                  <CategoryIcon source={require('../../icons/back(white).png')}></CategoryIcon>
-                </View>
-                <View
-                  style={{
-                    height: "2%"
-                  }}
-                ></View>
-                {tabs.map((tab, i) => (
+      <AnimatedContainer style={{ opacity: translate_Animation_Opacity }} >
+        <LinearGradient
+          colors={["#edf4ff", "#edf4ff"]}
+          style={{
+            width: "100%",
+            height: "100%"
+          }}
+        >
+          <View style={{ flexDirection: 'row', height: '100%' }}>
+            <Animated.View
+              style={{
+                width: "8.5%",
+                height: '100%',
+                transform: [{ translateX: translate_Animation_Object }],
+                //backgroundColor: "#8097b0",
+                backgroundColor: "#edf4ff",
+                position: "relative"
+              }}
+            >
+              <ContainerRow>
+                <Sidebar>
                   <TouchableOpacity
-                    key={i}
-                    onPress={() => this.selectCategory(i)}
-                    style={{ height: "12%" }}
+                    style={{
+                      height: "12%",
+                      borderBottomWidth: 0.75,
+                      borderColor: "#93a9bd",
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}
+                    onPress={this.home}
                   >
-                    {this.state.selectedCategory === i ? (
-                      <View
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          alignContent: "center"
-                        }}
-                      >
-                        <View
-                          style={{
-                            alignContent: "center",
-                            alignItems: "center",
-                            alignSelf: "center",
-                            justifyContent: "center",
-                            height: "90%",
-                            width: "80%",
-                            backgroundColor: "#edf4ff",
-                            borderRadius: 8
-                          }}
-                        >
-                          <CategoryIcon source={tab.icon}></CategoryIcon>
-                          <View style={{ paddingTop: "5%" }}>
-                            <Text>{tab.label}</Text>
-                          </View>
-                        </View>
+                    <Text style={{ color: 'white' }}></Text>
+                    <CategoryIcon source={require('../../icons/home(grey).png')} ></CategoryIcon>
+                    <View style={{ paddingTop: "5%" }}>
+                      <Text style={{ color: 'white' }}>Home</Text>
+                    </View>
+                  </TouchableOpacity>
 
-                        {tab.lines.map((setting, i) => (
-                          <SettingsLine key={i}>
-                            <SettingsText>{setting}</SettingsText>
-                          </SettingsLine>
-                        ))}
-                      </View>
-                    ) : (
+                  {tabs.map((tab, i) => (
+                    <TouchableOpacity
+                      key={i}
+                      onPress={() => this.selectCategory(i)}
+                      style={{ height: "12%" }}
+                    >
+                      {this.state.selectedCategory === i ? (
                         <View
                           style={{
                             width: "100%",
@@ -305,71 +284,107 @@ class Menu extends React.Component {
                             style={{
                               alignContent: "center",
                               alignItems: "center",
-                              height: "100%",
-                              width: "100%",
+                              alignSelf: "center",
                               justifyContent: "center",
-                              alignSelf: "center"
+                              height: "90%",
+                              width: "80%",
+                              backgroundColor: "#edf4ff",
+                              borderRadius: 8
                             }}
                           >
-                            <CategoryIcon source={tab.iconGrey}></CategoryIcon>
+                            <CategoryIcon source={tab.icon}></CategoryIcon>
                             <View style={{ paddingTop: "5%" }}>
-                              <Text style={{ color: "#B6BAC9" }}>{tab.label}</Text>
+                              <Text>{tab.label}</Text>
                             </View>
                           </View>
+
                           {tab.lines.map((setting, i) => (
                             <SettingsLine key={i}>
-                              <SettingsText>{setting}#B6BAC9</SettingsText>
+                              <SettingsText>{setting}</SettingsText>
                             </SettingsLine>
                           ))}
                         </View>
-                      )}
+                      ) : (
+                          <View
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              alignContent: "center"
+                            }}
+                          >
+                            <View
+                              style={{
+                                alignContent: "center",
+                                alignItems: "center",
+                                height: "100%",
+                                width: "100%",
+                                justifyContent: "center",
+                                alignSelf: "center"
+                              }}
+                            >
+                              <CategoryIcon source={tab.iconGrey}></CategoryIcon>
+                              <View style={{ paddingTop: "5%" }}>
+                                <Text style={{ color: "#B6BAC9" }}>{tab.label}</Text>
+                              </View>
+                            </View>
+                            {tab.lines.map((setting, i) => (
+                              <SettingsLine key={i}>
+                                <SettingsText>{setting}#B6BAC9</SettingsText>
+                              </SettingsLine>
+                            ))}
+                          </View>
+                        )}
 
-                  </TouchableOpacity>
-
-                ))}
-
-                <View style={{ height: '22%' }} />
-                <View
-                  style={{
-                    alignSelf: 'flex-end',
-                    alignContent: "center",
-                    alignItems: "center",
-                    width: "100%",
-                    justifyContent: "center",
-                    paddingTop: '20%',
-
-                  }}
-                >
-                  <View
-                    style={{
-                      height: '37%',
-                      width: '80%',
-                      borderRadius: 8,
-                      flexDirection: 'row',
-                      justifyContent: 'center',
-                      borderColor: 'white',
-                      borderWidth: 1,
-
-                    }}>
-                    <TouchableOpacity onPress={this.log}>
-                      <View style={{ justifyContent: 'center' }}>
-                        <Text style={{ color: "white", textAlign: 'center', fontWeight: 'bold' }}>LOGOUT</Text>
-                      </View>
                     </TouchableOpacity>
 
-                  </View>
-                </View>
-              </Sidebar></ContainerRow>
+                  ))}
 
-          </Animated.View>
-          <View style={{ width: '91.5%' }}>
-            {this.pageSelect()}
+                  <View style={{ height: '28%' }} />
+                  <View
+                    style={{
+                      alignSelf: 'flex-end',
+                      alignContent: "center",
+                      alignItems: "center",
+                      width: "100%",
+                      justifyContent: "center",
+                      paddingTop: '20%',
+
+                    }}
+                  >
+                    <View
+                      style={{
+                        height: '37%',
+                        width: '80%',
+                        borderRadius: 8,
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        borderColor: 'white',
+                        borderWidth: 1,
+
+                      }}>
+                      <TouchableOpacity onPress={this.log}>
+                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                          <Text style={{ color: "white", textAlign: 'center', fontWeight: 'bold' }}>LOGOUT</Text>
+                        </View>
+                      </TouchableOpacity>
+
+                    </View>
+                  </View>
+                </Sidebar></ContainerRow>
+
+            </Animated.View>
+            <View style={{ width: '91.5%', height: '100%' }}>
+              {this.pageSelect()}
+            </View>
+
           </View>
 
-        </View>
 
+        </LinearGradient >
+      </AnimatedContainer>
 
-      </LinearGradient >
     );
   }
 }
@@ -465,7 +480,14 @@ const SettingsText = styled.Text``;
 
 const HeaderText = styled.Text``;
 
+
+const Container2 = styled.View`
+  
+`;
+const AnimatedContainer = Animated.createAnimatedComponent(Container2)
+
 const tabs = [
+
   {
     icon: require("../../icons/dashboard.png"),
     iconGrey: require("../../icons/dashboard(grey).png"),

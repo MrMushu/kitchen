@@ -28,7 +28,7 @@ const areEqual = (prevProps, nextProps) => {
 const DisplayTickets = React.memo(AnimatedTicket, areEqual);
 
 
-class Tickets extends React.PureComponent {
+class Tickets extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -63,9 +63,13 @@ class Tickets extends React.PureComponent {
             height: "100%",
             flexDirection: "row",
             flexWrap: "wrap",
-            borderBottomWidth: 0.25
           }}
         >
+          {this.props.tickets.pending.length === 0 ? (
+            <View style={{ justifyContent: 'center', alignContent: 'center' }}>
+              <Text style={{ textAlign: 'center' }}></Text>
+            </View>
+          ) : null}
           {this.props.tickets.pending.map((item, i) => (
             <DisplayTickets
               key={item.id}
