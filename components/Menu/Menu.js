@@ -7,7 +7,7 @@ import {
   Text,
   TouchableOpacity,
   AsyncStorage,
-  ScrollView
+  ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Header from "../Header";
@@ -16,9 +16,9 @@ import MyAccount from "./MyAccount/MyAccount";
 import Orders from "./Orders/Orders";
 import Dashboard from "./Dashboard/Dashboard";
 import axios from "axios";
-import { connect } from 'react-redux'
-import { GET_DASHBOARD } from '../../actions/dashboard'
-import { LOG_OUT } from '../../actions/settings'
+import { connect } from "react-redux";
+import { GET_DASHBOARD } from "../../actions/dashboard";
+import { LOG_OUT } from "../../actions/settings";
 
 class Menu extends React.Component {
   constructor(props) {
@@ -28,7 +28,7 @@ class Menu extends React.Component {
       switchOn: false,
       selectedPage: 0,
       selectedCategory: 1,
-      selectedItem: 'none',
+      selectedItem: "none",
       pages: parseInt(this.props.tickets.completed.length / 9) + 1,
       merchantId: this.props.account.merchantId,
       code: this.props.account.code,
@@ -36,69 +36,62 @@ class Menu extends React.Component {
         sales: {
           previous: 0,
           total: 0,
-          weekly: [0, 0, 0, 0, 0, 0]
+          weekly: [0, 0, 0, 0, 0, 0],
         },
         orders: {
-          previous: 0
-          , total: 0
+          previous: 0,
+          total: 0,
         },
         bump: {
           previous: 0,
-          total: 0
+          total: 0,
         },
         orders_per_hour: {
-          labels: ['0'],
-          data: [0]
+          labels: ["0"],
+          data: [0],
         },
         category_sales: {
-          categories: ['none'],
-          series: [0]
-        }
+          categories: ["none"],
+          series: [0],
+        },
       },
       sales: 2423.24,
-      averageWait: '5m 3s'
+      averageWait: "5m 3s",
     };
-    this.menuToggle = this.props.menuToggle.bind(this);
     this.selectPage = this.selectPage.bind(this);
     this.pageSelect = this.pageSelect.bind(this);
-    this.animatedValue = new Animated.Value(-100)
-    this.animatedOpacity = new Animated.Value(1)
+    this.animatedValue = new Animated.Value(-100);
+    this.animatedOpacity = new Animated.Value(1);
 
-
-    this.checkCompleted = this.checkCompleted.bind(this)
-    this.undo = this.undo.bind(this)
-    this.props.GET_DASHBOARD(this.props.account.merchantId, this.props.account.code)
-    this.log = this.log.bind(this)
+    this.checkCompleted = this.checkCompleted.bind(this);
+    this.undo = this.undo.bind(this);
+    this.props.GET_DASHBOARD(
+      this.props.account.merchantId,
+      this.props.account.code
+    );
+    this.log = this.log.bind(this);
   }
 
   checkCompleted() {
     this.setState({
-      selectedItem: 'none'
-    })
-
-
+      selectedItem: "none",
+    });
   }
 
-
   saveBumpDelay() {
-
     var self = this;
     axios
       .get(`https://rocky-thicket-13861.herokuapp.com/api/saveBumpDelay/`, {
         params: {
           merchant_id: this.props.account.merchantId,
           code: this.props.account.code,
-          completed: JSON.stringify(this.props.tickets.completed.slice(0, 50))
-        }
-      }).catch(function (err) {
+          completed: JSON.stringify(this.props.tickets.completed.slice(0, 50)),
+        },
+      })
+      .catch(function (err) {
         console.log("error: ", err);
       });
   }
-
-
-
-
-
 
   setSelected = async () => {
     try {
@@ -112,16 +105,15 @@ class Menu extends React.Component {
             "To-Go": 0,
             "Dine-In": 2,
             Delivery: 3,
-            "Take-Out": 4
+            "Take-Out": 4,
           },
-          fontSizes: 1
+          fontSizes: 1,
         })
       ).then(this.getSelected());
     } catch (error) {
       console.log(error);
     }
   };
-
 
   switchToggle() {
     this.setState({ switchOn: !this.state.switchOn });
@@ -131,39 +123,31 @@ class Menu extends React.Component {
     this.setState({ selectedCategory: id });
   }
 
-
   selectPage(id) {
     this.setState({ selectedPage: id });
     console.log(id);
   }
 
   home = () => {
-
-
     Animated.timing(this.animatedValue, {
       toValue: -150,
       duration: 200,
-      useNativeDriver: true
-    }).start()
+      useNativeDriver: true,
+    }).start();
 
     setTimeout(() => {
-      this.props.menuToggle()
-
+      this.props.menuToggle();
     }, 150);
+  };
 
-  }
-
-
-  undo = (id) => this.props.undoSettings(id)
-  log = () => (this.props.LOG_OUT(), this.props.menuToggle(), this.props.loggedInToggle())
-
-
+  undo = (id) => this.props.undoSettings(id);
+  log = () => (
+    this.props.LOG_OUT(), this.props.menuToggle(), this.props.loggedInToggle()
+  );
 
   pageSelect() {
     if (this.state.selectedCategory === 0) {
-
       return (
-
         <Dashboard
           width={this.props.width}
           typeColors={typeColors}
@@ -178,9 +162,6 @@ class Menu extends React.Component {
           averageWait={this.state.averageWait}
         />
       );
-
-
-
     } else if (this.state.selectedCategory === 1) {
       return (
         <Orders
@@ -200,7 +181,7 @@ class Menu extends React.Component {
     } else if (this.state.selectedCategory === 2) {
       return <Settings />;
     } else if (this.state.selectedCategory === 3) {
-      return <MyAccount />
+      return <MyAccount />;
     }
   }
 
@@ -208,110 +189,113 @@ class Menu extends React.Component {
     Animated.timing(this.animatedValue, {
       toValue: 0,
       duration: 200,
-      useNativeDriver: true
+      useNativeDriver: true,
     }).start();
   }
 
   render() {
     const translate_Animation_Object = this.animatedValue.interpolate({
       inputRange: [0, 0.5, 0.75],
-      outputRange: [0, 0.5, 1]
+      outputRange: [0, 0.5, 1],
     });
 
     const translate_Animation_Opacity = this.animatedOpacity.interpolate({
       inputRange: [0, 0.5, 1],
-      outputRange: [0, 0.5, 1]
+      outputRange: [0, 0.5, 1],
     });
 
-    console.log('Menu rerender')
+    console.log("Menu rerender");
 
     return (
-      <AnimatedContainer style={{ opacity: translate_Animation_Opacity }} >
-        <LinearGradient
-          colors={["#edf4ff", "#edf4ff"]}
-          style={{
-            width: "100%",
-            height: "100%"
-          }}
-        >
-          <View style={{ flexDirection: 'row', height: '100%' }}>
-            <Animated.View
-              style={{
-                width: "8.5%",
-                height: '100%',
-                transform: [{ translateX: translate_Animation_Object }],
-                //backgroundColor: "#8097b0",
-                backgroundColor: "#edf4ff",
-                position: "relative"
-              }}
-            >
-              <ContainerRow>
-                <Sidebar>
-                  <TouchableOpacity
-                    style={{
-                      height: "12%",
-                      borderBottomWidth: 0.75,
-                      borderColor: "#93a9bd",
-                      justifyContent: 'center',
-                      alignItems: 'center'
-                    }}
-                    onPress={this.home}
-                  >
-                    <Text style={{ color: 'white' }}></Text>
-                    <CategoryIcon source={require('../../icons/home(grey).png')} ></CategoryIcon>
-                    <View style={{ paddingTop: "5%" }}>
-                      <Text style={{ color: 'white' }}>Home</Text>
-                    </View>
-                  </TouchableOpacity>
-
-                  {tabs.map((tab, i) => (
+      <View>
+        <AnimatedContainer style={{ opacity: translate_Animation_Opacity }}>
+          <LinearGradient
+            colors={["#edf4ff", "#edf4ff"]}
+            style={{
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <View style={{ flexDirection: "row", height: "100%" }}>
+              <Animated.View
+                style={{
+                  width: "8.5%",
+                  height: "100%",
+                  transform: [{ translateX: translate_Animation_Object }],
+                  //backgroundColor: "#8097b0",
+                  backgroundColor: "#edf4ff",
+                  position: "relative",
+                }}
+              >
+                <ContainerRow>
+                  <Sidebar>
                     <TouchableOpacity
-                      key={i}
-                      onPress={() => this.selectCategory(i)}
-                      style={{ height: "12%" }}
+                      style={{
+                        height: "12%",
+                        borderBottomWidth: 0.75,
+                        borderColor: "#93a9bd",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                      onPress={this.home}
                     >
-                      {this.state.selectedCategory === i ? (
-                        <View
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            alignContent: "center"
-                          }}
-                        >
-                          <View
-                            style={{
-                              alignContent: "center",
-                              alignItems: "center",
-                              alignSelf: "center",
-                              justifyContent: "center",
-                              height: "90%",
-                              width: "80%",
-                              backgroundColor: "#edf4ff",
-                              borderRadius: 8
-                            }}
-                          >
-                            <CategoryIcon source={tab.icon}></CategoryIcon>
-                            <View style={{ paddingTop: "5%" }}>
-                              <Text>{tab.label}</Text>
-                            </View>
-                          </View>
+                      <Text style={{ color: "white" }}></Text>
+                      <CategoryIcon
+                        source={require("../../icons/home(grey).png")}
+                      ></CategoryIcon>
+                      <View style={{ paddingTop: "5%" }}>
+                        <Text style={{ color: "white" }}>Home</Text>
+                      </View>
+                    </TouchableOpacity>
 
-                          {tab.lines.map((setting, i) => (
-                            <SettingsLine key={i}>
-                              <SettingsText>{setting}</SettingsText>
-                            </SettingsLine>
-                          ))}
-                        </View>
-                      ) : (
+                    {tabs.map((tab, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        onPress={() => this.selectCategory(i)}
+                        style={{ height: "12%" }}
+                      >
+                        {this.state.selectedCategory === i ? (
                           <View
                             style={{
                               width: "100%",
                               height: "100%",
                               alignItems: "center",
                               justifyContent: "center",
-                              alignContent: "center"
+                              alignContent: "center",
+                            }}
+                          >
+                            <View
+                              style={{
+                                alignContent: "center",
+                                alignItems: "center",
+                                alignSelf: "center",
+                                justifyContent: "center",
+                                height: "90%",
+                                width: "80%",
+                                backgroundColor: "#edf4ff",
+                                borderRadius: 8,
+                              }}
+                            >
+                              <CategoryIcon source={tab.icon}></CategoryIcon>
+                              <View style={{ paddingTop: "5%" }}>
+                                <Text>{tab.label}</Text>
+                              </View>
+                            </View>
+
+                            {tab.lines.map((setting, i) => (
+                              <SettingsLine key={i}>
+                                <SettingsText>{setting}</SettingsText>
+                              </SettingsLine>
+                            ))}
+                          </View>
+                        ) : (
+                          <View
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              alignContent: "center",
                             }}
                           >
                             <View
@@ -321,12 +305,16 @@ class Menu extends React.Component {
                                 height: "100%",
                                 width: "100%",
                                 justifyContent: "center",
-                                alignSelf: "center"
+                                alignSelf: "center",
                               }}
                             >
-                              <CategoryIcon source={tab.iconGrey}></CategoryIcon>
+                              <CategoryIcon
+                                source={tab.iconGrey}
+                              ></CategoryIcon>
                               <View style={{ paddingTop: "5%" }}>
-                                <Text style={{ color: "#B6BAC9" }}>{tab.label}</Text>
+                                <Text style={{ color: "#B6BAC9" }}>
+                                  {tab.label}
+                                </Text>
                               </View>
                             </View>
                             {tab.lines.map((setting, i) => (
@@ -336,55 +324,61 @@ class Menu extends React.Component {
                             ))}
                           </View>
                         )}
+                      </TouchableOpacity>
+                    ))}
 
-                    </TouchableOpacity>
-
-                  ))}
-
-                  <View style={{ height: '28%' }} />
-                  <View
-                    style={{
-                      alignSelf: 'flex-end',
-                      alignContent: "center",
-                      alignItems: "center",
-                      width: "100%",
-                      justifyContent: "center",
-                      paddingTop: '20%',
-
-                    }}
-                  >
+                    <View style={{ height: "28%" }} />
                     <View
                       style={{
-                        height: '37%',
-                        width: '80%',
-                        borderRadius: 8,
-                        flexDirection: 'row',
-                        justifyContent: 'center',
-                        borderColor: 'white',
-                        borderWidth: 1,
-
-                      }}>
-                      <TouchableOpacity onPress={this.log}>
-                        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                          <Text style={{ color: "white", textAlign: 'center', fontWeight: 'bold' }}>LOGOUT</Text>
-                        </View>
-                      </TouchableOpacity>
-
+                        alignSelf: "flex-end",
+                        alignContent: "center",
+                        alignItems: "center",
+                        width: "100%",
+                        justifyContent: "center",
+                        paddingTop: "20%",
+                      }}
+                    >
+                      <View
+                        style={{
+                          height: "37%",
+                          width: "80%",
+                          borderRadius: 8,
+                          flexDirection: "row",
+                          justifyContent: "center",
+                          borderColor: "white",
+                          borderWidth: 1,
+                        }}
+                      >
+                        <TouchableOpacity onPress={this.log}>
+                          <View
+                            style={{
+                              justifyContent: "center",
+                              alignItems: "center",
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: "white",
+                                textAlign: "center",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              LOGOUT
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                  </View>
-                </Sidebar></ContainerRow>
-
-            </Animated.View>
-            <View style={{ width: '91.5%', height: '100%' }}>
-              {this.pageSelect()}
+                  </Sidebar>
+                </ContainerRow>
+              </Animated.View>
+              <View style={{ width: "91.5%", height: "100%" }}>
+                {this.pageSelect()}
+              </View>
             </View>
-
-          </View>
-
-
-        </LinearGradient >
-      </AnimatedContainer>
-
+          </LinearGradient>
+        </AnimatedContainer>
+      </View>
     );
   }
 }
@@ -392,36 +386,31 @@ function mapStateToProps(state) {
   return {
     account: state.account,
     tickets: state.tickets,
-    dashboard: state.dashboard
-  }
+    dashboard: state.dashboard,
+  };
 }
 
-
 function mapDispatchToProps(dispatch, ownProps) {
-  return ({
-    GET_DASHBOARD: (merchantId, code) => dispatch(GET_DASHBOARD(merchantId, code)),
-    LOG_OUT: () => dispatch(LOG_OUT())
-  })
+  return {
+    GET_DASHBOARD: (merchantId, code) =>
+      dispatch(GET_DASHBOARD(merchantId, code)),
+    LOG_OUT: () => dispatch(LOG_OUT()),
+  };
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Menu);
-
-
-
-
-
 
 const orderTypes = { P3TPJPZ0Z21B6: "Togo", "6Z7C2VFZT3ZX2": "Dine-in" };
 
 const typeColors = {
   Togo: ["#4c85ba", "#346199"],
-  "Dine-in": ["#4c85ba", "#346199"]
+  "Dine-in": ["#4c85ba", "#346199"],
 };
 
 const employees = {
   NB0BPBVDEQBKW: "fa",
   EB7B48VASRTAY: "aaron",
-  "8SM7XJ48XD70M": "Aaron Okura"
+  "8SM7XJ48XD70M": "Aaron Okura",
 };
 
 const SettingsContainer = styled.View`
@@ -437,7 +426,7 @@ const SettingsContainer = styled.View`
 
 const ContainerRow = styled.View`
   flex-direction: row;
-  height: 100%
+  height: 100%;
 `;
 
 const Container = styled.View`
@@ -480,32 +469,26 @@ const SettingsText = styled.Text``;
 
 const HeaderText = styled.Text``;
 
-
-const Container2 = styled.View`
-  
-`;
-const AnimatedContainer = Animated.createAnimatedComponent(Container2)
+const Container2 = styled.View``;
+const AnimatedContainer = Animated.createAnimatedComponent(Container2);
 
 const tabs = [
-
   {
     icon: require("../../icons/dashboard.png"),
     iconGrey: require("../../icons/dashboard(grey).png"),
     label: "Dashboard",
-    lines: []
+    lines: [],
   },
   {
     icon: require("../../icons/ticket.png"),
     iconGrey: require("../../icons/ticket(grey).png"),
     label: "Orders",
-    lines: []
+    lines: [],
   },
   {
     icon: require("../../icons/gear.png"),
     iconGrey: require("../../icons/gear(grey).png"),
     label: "Settings",
-    lines: []
+    lines: [],
   },
-
-
 ];
